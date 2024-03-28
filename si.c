@@ -14,9 +14,9 @@
  * sections of the MSLA applicable to Source Code.
  *
  ******************************************************************************/
+#include <si.h>
 #include <string.h>
 #include <stdio.h>
-#include "i2cspm.h"
 #include "sl_i2cspm.h"
 #include "sl_i2cspm_instances.h"
 #include "sl_sleeptimer.h"

@@ -1,6 +1,6 @@
-i2cspm.o: ../i2cspm.c \
+mpl.o: ../mpl.c \
  D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\common\toolchain\inc/sl_gcc_preinclude.h \
- ../i2cspm.h \
+ D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software/mpl.h \
  D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\driver\i2cspm\inc/sl_i2cspm.h \
  D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_gpio.h \
  D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\Device\SiliconLabs\EFR32MG24\Include/em_device.h \
@@ -67,13 +67,9 @@ i2cspm.o: ../i2cspm.c \
  D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_i2c.h \
  D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\autogen/sl_i2cspm_instances.h \
  D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\service\sleeptimer\inc/sl_sleeptimer.h \
- D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\common\inc/sl_status.h \
- D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\driver\leddrv\inc/sl_simple_led.h \
- D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\driver\leddrv\inc/sl_led.h \
- D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\autogen/sl_simple_led_instances.h \
- D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\common\inc/sl_atomic.h
+ D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\common\inc/sl_status.h
 D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\common\toolchain\inc/sl_gcc_preinclude.h:
-../i2cspm.h:
+D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software/mpl.h:
 D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\driver\i2cspm\inc/sl_i2cspm.h:
 D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_gpio.h:
 D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\Device\SiliconLabs\EFR32MG24\Include/em_device.h:
@@ -141,7 +137,3 @@ D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platfo
 D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\autogen/sl_i2cspm_instances.h:
 D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\service\sleeptimer\inc/sl_sleeptimer.h:
 D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\common\inc/sl_status.h:
-D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\driver\leddrv\inc/sl_simple_led.h:
-D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\driver\leddrv\inc/sl_led.h:
-D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\autogen/sl_simple_led_instances.h:
-D:\CUSP24\ECEN5833\SimplicityStudioProjects\LPHR_Software\gecko_sdk_4.4.1\platform\common\inc/sl_atomic.h:
