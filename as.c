@@ -253,7 +253,6 @@ void AS7331_ChangeMode(uint8_t new_mode)
 
                     // assert successful transaction and indicate mode change
                     EFM_ASSERT(ret == i2cTransferDone);
-                    printf("[%10s] Changing Sensor Mode to Configuration Mode...\r\n", AS_NAME);
             }
     // set to measurement mode
     } else if (new_mode == AS_CONFIG_MODE_MEASUREMENT){
@@ -269,7 +268,6 @@ void AS7331_ChangeMode(uint8_t new_mode)
 
                     // assert successful transaction and indicate mode change
                     EFM_ASSERT(ret == i2cTransferDone);
-                    printf("[%10s] Changing Sensor Mode to Measurement Mode...\r\n", AS_NAME);
             }
     }
 
@@ -310,6 +308,7 @@ void as_dev_id(void)
 void as_init(void)
 {
     // set the current mode to configuration mode
+    printf("[%10s] Changing Sensor Mode to Configuration Mode...\r\n", AS_NAME);
     AS7331_ChangeMode(AS_CONFIG_MODE_CONFIGURATION);
 
     // create I2C parameters
@@ -374,6 +373,7 @@ void as_init(void)
     EFM_ASSERT(ret == i2cTransferDone);
 
     // change to measurement mode once all configuration settings have been made
+    printf("[%10s] Changing Sensor Mode to Measurement Mode...\r\n", AS_NAME);
     AS7331_ChangeMode(AS_CONFIG_MODE_MEASUREMENT);
 }
 
