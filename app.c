@@ -17,6 +17,7 @@
 
 #include <si.h>
 #include <as.h>
+#include <mpl.h>
 #include <stdio.h>
 
 /***************************************************************************//**
@@ -36,7 +37,7 @@ void app_init(void)
      */
     i2cspm_app_init();
     as_init();
-    //  mpl_init();
+    mpl_init();
 
     /**
      * Application Start Message - process action following this block of code
@@ -55,5 +56,8 @@ void app_init(void)
  ******************************************************************************/
 void app_process_action(void)
 {
-  i2cspm_app_process_action();
+  /**
+   * Main application ticking functions
+   */
+//  i2cspm_app_process_action();
 }

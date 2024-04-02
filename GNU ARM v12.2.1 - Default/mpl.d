@@ -1,10 +1,8 @@
-gecko_sdk_4.4.1/platform/service/device_init/src/sl_device_init_hfxo_s2.o: \
- ../gecko_sdk_4.4.1/platform/service/device_init/src/sl_device_init_hfxo_s2.c \
+mpl.o: ../mpl.c \
  C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\toolchain\inc/sl_gcc_preinclude.h \
- C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\service\device_init\inc/sl_device_init_hfxo.h \
- C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\inc/sl_status.h \
- C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\config/sl_device_init_hfxo_config.h \
- C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_cmu.h \
+ C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software/as.h \
+ C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\driver\i2cspm\inc/sl_i2cspm.h \
+ C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_gpio.h \
  C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\Device\SiliconLabs\EFR32MG24\Include/em_device.h \
  C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\Device\SiliconLabs\EFR32MG24\Include/efr32mg24b210f1536im48.h \
  C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\CMSIS\Core\Include/core_cm33.h \
@@ -65,15 +63,16 @@ gecko_sdk_4.4.1/platform/service/device_init/src/sl_device_init_hfxo_s2.o: \
  C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\inc/sl_common.h \
  C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\inc/sl_assert.h \
  C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\config/emlib_core_debug_config.h \
- C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_cmu_compat.h \
- C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_gpio.h \
  C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\inc/sl_enum.h \
- C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/sli_em_cmu.h
+ C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_i2c.h \
+ C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\autogen/sl_i2cspm_instances.h \
+ C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\config/sl_i2cspm_sensor_config.h \
+ C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\service\sleeptimer\inc/sl_sleeptimer.h \
+ C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\inc/sl_status.h
 C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\toolchain\inc/sl_gcc_preinclude.h:
-C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\service\device_init\inc/sl_device_init_hfxo.h:
-C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\inc/sl_status.h:
-C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\config/sl_device_init_hfxo_config.h:
-C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_cmu.h:
+C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software/as.h:
+C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\driver\i2cspm\inc/sl_i2cspm.h:
+C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_gpio.h:
 C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\Device\SiliconLabs\EFR32MG24\Include/em_device.h:
 C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\Device\SiliconLabs\EFR32MG24\Include/efr32mg24b210f1536im48.h:
 C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\CMSIS\Core\Include/core_cm33.h:
@@ -134,7 +133,9 @@ C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform
 C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\inc/sl_common.h:
 C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\inc/sl_assert.h:
 C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\config/emlib_core_debug_config.h:
-C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_cmu_compat.h:
-C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_gpio.h:
 C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\inc/sl_enum.h:
-C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/sli_em_cmu.h:
+C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\emlib\inc/em_i2c.h:
+C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\autogen/sl_i2cspm_instances.h:
+C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\config/sl_i2cspm_sensor_config.h:
+C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\service\sleeptimer\inc/sl_sleeptimer.h:
+C:\Users\Halcyon\Desktop\CUSP24\ECEN5833\LPEDT_Software\gecko_sdk_4.4.1\platform\common\inc/sl_status.h:
