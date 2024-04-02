@@ -17,15 +17,38 @@
 
 #include <si.h>
 #include <mpl.h>
+#include <as.h>
+#include <stdio.h>
 
 /***************************************************************************//**
  * Initialize application.
  ******************************************************************************/
 void app_init(void)
 {
-  i2cspm_app_init();
+    /**
+     * Application Header - begin module initialization
+     */
+    printf("==============================================\r\n");
+    printf("Beginning Module Initialization...\r\n");
+    printf("==============================================\r\n");
 
-  mpl_init();
+    /**
+     * Module Initialization - call sensor API to initialize all sensors
+     */
+    i2cspm_app_init();
+    as_init();
+    //  mpl_init();
+
+    /**
+     * Application Start Message - process action following this block of code
+     */
+    printf("==============================================\r\n");
+    printf("Sensors Initialized!\r\n");
+    printf("==============================================\r\n");
+    printf("Welcome to Team 3 - LPHR Software Application.\r\n");
+    printf("Authors: Tommy Ramirez and Jake Uyechi\r\n");
+    printf("Term: CU SP'24 ECEN5833\r\n");
+    printf("==============================================\r\n");
 }
 
 /***************************************************************************//**

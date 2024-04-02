@@ -289,7 +289,7 @@ void i2cspm_app_init(void)
   ret = SI7021_transaction(I2C_FLAG_WRITE_READ, cmdReadId2, 2, deviceId, 8);
 
   // Print Device ID
-  printf("\r\nSi7021 Device ID: 0x%02X\r\n", deviceId[0]);
+  printf("Si7021 Device ID: 0x%02X\r\n", deviceId[0]);
 
   // Make sure transfer was successful
   EFM_ASSERT(ret == i2cTransferDone);
@@ -302,9 +302,6 @@ void i2cspm_app_init(void)
 
   // Initialize Periodic timer
   initialise_timer();
-
-  // stdout is redirected to VCOM in project configuration
-  printf("Welcome to the I2CSPM example application\r\n");
 }
 
 /***************************************************************************//**
