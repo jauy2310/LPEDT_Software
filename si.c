@@ -289,7 +289,7 @@ void i2cspm_app_init(void)
   ret = SI7021_transaction(I2C_FLAG_WRITE_READ, cmdReadId2, 2, deviceId, 8);
 
   // Print Device ID
-  printf("Si7021 Device ID: 0x%02X\r\n", deviceId[0]);
+  printf("%-10s Device ID: 0x%02X\r\n", "Si7021", deviceId[0]);
 
   // Make sure transfer was successful
   EFM_ASSERT(ret == i2cTransferDone);

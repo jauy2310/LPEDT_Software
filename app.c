@@ -19,12 +19,18 @@
 #include <as.h>
 #include <mpl.h>
 #include <stdio.h>
+#include "sl_sleeptimer.h"
 
 /***************************************************************************//**
  * Initialize application.
  ******************************************************************************/
 void app_init(void)
 {
+    /**
+     * Startup Delay
+     */
+    sl_sleeptimer_delay_millisecond(1000);
+
     /**
      * Application Header - begin module initialization
      */

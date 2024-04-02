@@ -111,13 +111,13 @@ void mpl_init()
     uint8_t mpl_device_id[8];
 
     // Wait for sensor to become ready
-    sl_sleeptimer_delay_millisecond(1000);
+    sl_sleeptimer_delay_millisecond(80);
 
     // Check for device presence  and compare device ID
     ret = MPL3115A2_transaction(I2C_FLAG_WRITE_READ, mpl_read_id_sequence, 1, mpl_device_id, 8);
 
     // Print Device ID
-    printf("MPL3115A2 Device ID: 0x%02X\r\n", mpl_device_id[0]);
+    printf("%-10s Device ID: 0x%02X\r\n", "MPL3115A2", mpl_device_id[0]);
 
     // Make sure transfer was successful
     EFM_ASSERT(ret == i2cTransferDone);

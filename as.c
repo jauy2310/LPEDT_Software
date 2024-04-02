@@ -115,7 +115,7 @@ void as_init()
     ret = AS7331_transaction(I2C_FLAG_WRITE_READ, as_read_id_sequence, 1, as_device_id, 8);
 
     // Print Device ID
-    printf("AS7331 Device ID: 0x%02X\r\n", as_device_id[0]);
+    printf("%-10s Device ID: 0x%02X\r\n", "AS7331", as_device_id[0]);
 
     // Make sure transfer was successful
     EFM_ASSERT(ret == i2cTransferDone);
