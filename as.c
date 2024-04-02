@@ -1,6 +1,8 @@
 /*
  * as.c
  *
+ * Implementation file for the AS7331 sensor module
+ *
  *  Created on: Mar 29, 2024
  *      Author: Jake Uyechi
  */
@@ -18,11 +20,7 @@
 /*********************************************************
  * Macros
  ********************************************************/
-// define an instance of the AS sensor
-//typedef I2C_TypeDef as_i2cspm_t;
-//as_i2cspm_t *as_i2cspm_sensor = SL_I2CSPM_SENSOR_PERIPHERAL;
-
-// define the AS3771 configuration settings
+// define the AS7331 configuration settings
 #define AS_CONFIG_I2C_DEVICE                    (sl_i2cspm_sensor)
 #define AS_CONFIG_SLAVE_ADDRESS                 0x74
 #define AS_CONFIG_SLAVE_ADDRESS_READ            (AS_CONFIG_SLAVE_ADDRESS << 1 || 1)
@@ -38,10 +36,21 @@
 /*********************************************************
  * Local Functions
  ********************************************************/
-/*
- * MPL3115A2_transaction
+/**
+ * AS7331_transaction()
+ *
+ * Constructs an I2C sequence for a single transaction between the master (EFR32)
+ * and slave (AS7331).
+ *
+ * @param flag              The type of I2C transaction being made
+ * @param writeCmd          The array of write addresses to send from master to slave
+ * @param writeLen          The length of the write array
+ * @param readCmd           The array of read addresses to store data from slave to master
+ * @param readLen           The length of the read array
+ *
+ * @return                  The return status of the I2C transaction
  */
-static I2C_TransferReturn_TypeDef AS3771_transaction(uint16_t flag,
+static I2C_TransferReturn_TypeDef AS7331_transaction(uint16_t flag,
                                                      uint8_t *writeCmd,
                                                      size_t writeLen,
                                                      uint8_t *readCmd,
@@ -93,11 +102,6 @@ static I2C_TransferReturn_TypeDef AS3771_transaction(uint16_t flag,
 /*********************************************************
  * Global Functions
  ********************************************************/
-/*
- * as_init()
- *
- * Initializes the AS7331 module and retrieves device ID
- */
 void as_init()
 {
     I2C_TransferReturn_TypeDef ret;
@@ -108,14 +112,19 @@ void as_init()
     sl_sleeptimer_delay_millisecond(80);
 
     // Check for device presence  and compare device ID
-    ret = AS3771_transaction(I2C_FLAG_WRITE_READ, as_read_id_sequence, 1, as_device_id, 8);
+    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, as_read_id_sequence, 1, as_device_id, 8);
 
     // Print Device ID
-    printf("AS3771 Device ID: 0x%02X\r\n", as_device_id[0]);
+    printf("AS7331 Device ID: 0x%02X\r\n", as_device_id[0]);
 
     // Make sure transfer was successful
     EFM_ASSERT(ret == i2cTransferDone);
 
     // Check the Received Device ID
     EFM_ASSERT(as_device_id[0] == AS_CONFIG_DEVICE_ID);
+}
+
+void as_process_action()
+{
+    return;
 }
