@@ -104,7 +104,7 @@ static I2C_TransferReturn_TypeDef MPL3115A2_transaction(uint16_t flag,
 /*********************************************************
  * Global Functions
  ********************************************************/
-void mpl_init()
+void mpl_dev_id(void)
 {
     I2C_TransferReturn_TypeDef ret;
     uint8_t mpl_read_id_sequence[1] = {MPL_REG_WHOAMI};
@@ -126,7 +126,12 @@ void mpl_init()
     EFM_ASSERT(mpl_device_id[0] == MPL_CONFIG_DEVICE_ID);
 }
 
-void mpl_process_action()
+void mpl_init(void)
+{
+    return;
+}
+
+void mpl_process_action(void)
 {
     return;
 }

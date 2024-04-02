@@ -11,6 +11,16 @@
 #define MPL_H_
 
 /***************************************************************************//**
+ * Get Module Device ID
+ ******************************************************************************/
+/**
+ * mpl_dev_id()
+ *
+ * Retrieves the device ID of the MPL3115A2
+ */
+void mpl_dev_id(void);
+
+/***************************************************************************//**
  * Initialize Module
  ******************************************************************************/
 /**
@@ -29,6 +39,6 @@ void mpl_init(void);
  *
  * Performs a full measurement cycle for the MPL7331
  */
-void mpl_process_action();
+void mpl_process_action(void);
 
 #endif /* MPL_H_ */

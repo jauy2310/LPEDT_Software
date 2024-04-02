@@ -78,46 +78,46 @@ static I2C_TransferReturn_TypeDef SI7021_transaction(uint16_t flag,
                                                      uint8_t *readCmd,
                                                      size_t readLen)
 {
-  I2C_TransferSeq_TypeDef seq;
-  I2C_TransferReturn_TypeDef ret;
+    I2C_TransferSeq_TypeDef seq;
+    I2C_TransferReturn_TypeDef ret;
 
-  seq.addr = SI7021_I2C_BUS_ADDRESS << 1;
-  seq.flags = flag;
+    seq.addr = SI7021_I2C_BUS_ADDRESS << 1;
+    seq.flags = flag;
 
-  switch (flag) {
-    // Send the write command from writeCmd
-    case I2C_FLAG_WRITE:
-      seq.buf[0].data = writeCmd;
-      seq.buf[0].len  = writeLen;
+    switch (flag) {
+        // Send the write command from writeCmd
+        case I2C_FLAG_WRITE:
+            seq.buf[0].data = writeCmd;
+            seq.buf[0].len  = writeLen;
 
-      break;
+            break;
 
-    // Receive data into readCmd of readLen
-    case I2C_FLAG_READ:
-      seq.buf[0].data = readCmd;
-      seq.buf[0].len  = readLen;
+            // Receive data into readCmd of readLen
+        case I2C_FLAG_READ:
+            seq.buf[0].data = readCmd;
+            seq.buf[0].len  = readLen;
 
-      break;
+            break;
 
-    // Send the write command from writeCmd
-    // and receive data into readCmd of readLen
-    case I2C_FLAG_WRITE_READ:
-      seq.buf[0].data = writeCmd;
-      seq.buf[0].len  = writeLen;
+            // Send the write command from writeCmd
+            // and receive data into readCmd of readLen
+        case I2C_FLAG_WRITE_READ:
+            seq.buf[0].data = writeCmd;
+            seq.buf[0].len  = writeLen;
 
-      seq.buf[1].data = readCmd;
-      seq.buf[1].len  = readLen;
+            seq.buf[1].data = readCmd;
+            seq.buf[1].len  = readLen;
 
-      break;
+            break;
 
-    default:
-      return i2cTransferUsageFault;
-  }
+        default:
+            return i2cTransferUsageFault;
+    }
 
-  // Perform the transfer and return status from the transfer
-  ret = I2CSPM_Transfer(SI7021_I2C_DEVICE, &seq);
+    // Perform the transfer and return status from the transfer
+    ret = I2CSPM_Transfer(SI7021_I2C_DEVICE, &seq);
 
-  return ret;
+    return ret;
 }
 
 /***************************************************************************//**
@@ -128,13 +128,13 @@ static I2C_TransferReturn_TypeDef SI7021_transaction(uint16_t flag,
  ******************************************************************************/
 uint32_t decode_rh(uint8_t* read_register)
 {
-  uint32_t rhValue;
+    uint32_t rhValue;
 
-  // Formula to decode read RH from the Si7021 Datasheet
-  rhValue = ((uint32_t) read_register[0] << 8) + (read_register[1] & 0xfc);
-  rhValue = (((rhValue) * 125) >> 16) - 6;
+    // Formula to decode read RH from the Si7021 Datasheet
+    rhValue = ((uint32_t) read_register[0] << 8) + (read_register[1] & 0xfc);
+    rhValue = (((rhValue) * 125) >> 16) - 6;
 
-  return rhValue;
+    return rhValue;
 }
 
 /***************************************************************************//**
@@ -145,22 +145,22 @@ uint32_t decode_rh(uint8_t* read_register)
  ******************************************************************************/
 uint32_t decode_temp(uint8_t* read_register)
 {
-  uint32_t tempValue;
-  float actual_temp;
-  uint32_t rounded_temp;
+    uint32_t tempValue;
+    float actual_temp;
+    uint32_t rounded_temp;
 
-  // Formula to decode read Temperature from the Si7021 Datasheet
-  tempValue = ((uint32_t) read_register[0] << 8) + (read_register[1] & 0xfc);
-  actual_temp = (((tempValue) * 175.72f) / 65536) - 46.85f;
+    // Formula to decode read Temperature from the Si7021 Datasheet
+    tempValue = ((uint32_t) read_register[0] << 8) + (read_register[1] & 0xfc);
+    actual_temp = (((tempValue) * 175.72f) / 65536) - 46.85f;
 
-  // Round the temperature to an integer value
-  if (actual_temp < 0) {
-    rounded_temp = (uint32_t)(actual_temp - 0.5f);
-  } else {
-    rounded_temp = (uint32_t)(actual_temp + 0.5f);
-  }
+    // Round the temperature to an integer value
+    if (actual_temp < 0) {
+            rounded_temp = (uint32_t)(actual_temp - 0.5f);
+    } else {
+            rounded_temp = (uint32_t)(actual_temp + 0.5f);
+    }
 
-  return rounded_temp;
+    return rounded_temp;
 }
 
 /***************************************************************************//**
@@ -171,39 +171,39 @@ uint32_t decode_temp(uint8_t* read_register)
  ******************************************************************************/
 static void SI7021_measure(uint32_t *rhData, int32_t *tData)
 {
-  I2C_TransferReturn_TypeDef ret;
-  uint8_t cmd;
-  uint8_t readData[2];
-  uint32_t timeout;
+    I2C_TransferReturn_TypeDef ret;
+    uint8_t cmd;
+    uint8_t readData[2];
+    uint32_t timeout;
 
-  // Start no-hold measurement by writing command to si7021
-  cmd = SI7021_CMD_MEASURE_RH_NO_HOLD;
-  ret = SI7021_transaction(I2C_FLAG_WRITE, &cmd, 2, NULL, 0);
-  EFM_ASSERT(ret == i2cTransferDone);
+    // Start no-hold measurement by writing command to si7021
+    cmd = SI7021_CMD_MEASURE_RH_NO_HOLD;
+    ret = SI7021_transaction(I2C_FLAG_WRITE, &cmd, 2, NULL, 0);
+    EFM_ASSERT(ret == i2cTransferDone);
 
-  // Wait for data to become ready
-  timeout = 500;
-  while (timeout--) {
-    ret = SI7021_transaction(I2C_FLAG_READ, NULL, 0, readData, 2);
-    if (ret == i2cTransferDone) {
-      break;
-    } else if (ret == i2cTransferNack) {
-      // Si7021 returns a Nack if data not ready
-      continue;
+    // Wait for data to become ready
+    timeout = 500;
+    while (timeout--) {
+            ret = SI7021_transaction(I2C_FLAG_READ, NULL, 0, readData, 2);
+            if (ret == i2cTransferDone) {
+                    break;
+            } else if (ret == i2cTransferNack) {
+                    // Si7021 returns a Nack if data not ready
+                    continue;
+            }
     }
-  }
 
-  EFM_ASSERT(timeout > 0);
+    EFM_ASSERT(timeout > 0);
 
-  // Data is ready, decode the RH value
-  *rhData = decode_rh(readData);
+    // Data is ready, decode the RH value
+    *rhData = decode_rh(readData);
 
-  // Read the temperature measured during RH measurement
-  cmd = SI7021_CMD_READ_TEMP;
-  ret = SI7021_transaction(I2C_FLAG_WRITE_READ, &cmd, 1, readData, 2);
-  EFM_ASSERT(ret == i2cTransferDone);
+    // Read the temperature measured during RH measurement
+    cmd = SI7021_CMD_READ_TEMP;
+    ret = SI7021_transaction(I2C_FLAG_WRITE_READ, &cmd, 1, readData, 2);
+    EFM_ASSERT(ret == i2cTransferDone);
 
-  *tData = decode_temp(readData);
+    *tData = decode_temp(readData);
 }
 
 /***************************************************************************//**
@@ -214,10 +214,10 @@ static void SI7021_measure(uint32_t *rhData, int32_t *tData)
  ******************************************************************************/
 static void timer_callback(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
-  (void)handle;
-  (void)data;
-  bool local_read_sensor_data = true;
-  sl_atomic_store(read_sensor_data, local_read_sensor_data);
+    (void)handle;
+    (void)data;
+    bool local_read_sensor_data = true;
+    sl_atomic_store(read_sensor_data, local_read_sensor_data);
 }
 
 /***************************************************************************//**
@@ -228,8 +228,8 @@ static void timer_callback(sl_sleeptimer_timer_handle_t *handle, void *data)
  ******************************************************************************/
 static void initialise_timer()
 {
-  uint32_t ticks = sl_sleeptimer_ms_to_tick(1000);
-  sl_sleeptimer_start_periodic_timer(&delay_timer, ticks, timer_callback, NULL, 0, 0);
+    uint32_t ticks = sl_sleeptimer_ms_to_tick(1000);
+    sl_sleeptimer_start_periodic_timer(&delay_timer, ticks, timer_callback, NULL, 0, 0);
 }
 
 /***************************************************************************//**
@@ -240,12 +240,12 @@ static void initialise_timer()
  ******************************************************************************/
 void initialise_temp_limits()
 {
-  // Get current temperature
-  SI7021_measure(&relative_humidity, &start_temperature);
+    // Get current temperature
+    SI7021_measure(&relative_humidity, &start_temperature);
 
-  // Set temperature limits based on initial temperature.
-  low_limit = start_temperature - (TEMPERATURE_BAND_C / 2);
-  high_limit = start_temperature + (TEMPERATURE_BAND_C / 2);
+    // Set temperature limits based on initial temperature.
+    low_limit = start_temperature - (TEMPERATURE_BAND_C / 2);
+    high_limit = start_temperature + (TEMPERATURE_BAND_C / 2);
 }
 
 /***************************************************************************//**
@@ -256,17 +256,17 @@ void initialise_temp_limits()
  ******************************************************************************/
 void set_leds(int32_t temp)
 {
-  if (temp > high_limit) {
-    // For higher temperature, turn led0 on and turn led1 off
-    sl_led_turn_on(&sl_led_led0);
-    sl_led_turn_off(&sl_led_led1);
-    printf("Turning LED0 on!\r\n");
-  } else if (temp < low_limit) {
-    // For lower temperature, turn led1 on and turn led0 off
-    sl_led_turn_off(&sl_led_led0);
-    sl_led_turn_on(&sl_led_led1);
-    printf("Turning LED1 on!\r\n");
-  }
+    if (temp > high_limit) {
+            // For higher temperature, turn led0 on and turn led1 off
+            sl_led_turn_on(&sl_led_led0);
+            sl_led_turn_off(&sl_led_led1);
+            printf("Turning LED0 on!\r\n");
+    } else if (temp < low_limit) {
+            // For lower temperature, turn led1 on and turn led0 off
+            sl_led_turn_off(&sl_led_led0);
+            sl_led_turn_on(&sl_led_led1);
+            printf("Turning LED1 on!\r\n");
+    }
 }
 
 /*******************************************************************************
@@ -274,59 +274,65 @@ void set_leds(int32_t temp)
  ******************************************************************************/
 
 /*******************************************************************************
+ * Retrieve Device ID
+ ******************************************************************************/
+void si_dev_id(void)
+{
+    I2C_TransferReturn_TypeDef ret;
+    uint8_t cmdReadId2[2] = SI7021_CMD_READ_ID_BYTE2;
+    uint8_t deviceId[8];
+
+    // Wait for sensor to become ready
+    sl_sleeptimer_delay_millisecond(80);
+
+    // Check for device presence  and compare device ID
+    ret = SI7021_transaction(I2C_FLAG_WRITE_READ, cmdReadId2, 2, deviceId, 8);
+
+    // Print Device ID
+    printf("%-10s Device ID: 0x%02X\r\n", "Si7021", deviceId[0]);
+
+    // Make sure transfer was successful
+    EFM_ASSERT(ret == i2cTransferDone);
+
+    // Check the Received Device ID
+    EFM_ASSERT(deviceId[0] == SI7021_DEVICE_ID);
+}
+
+/*******************************************************************************
  * Initialize example.
  ******************************************************************************/
-void i2cspm_app_init(void)
+void si_init(void)
 {
-  I2C_TransferReturn_TypeDef ret;
-  uint8_t cmdReadId2[2] = SI7021_CMD_READ_ID_BYTE2;
-  uint8_t deviceId[8];
+    // Initialize LED PWM module
+    initialise_temp_limits();
 
-  // Wait for sensor to become ready
-  sl_sleeptimer_delay_millisecond(80);
-
-  // Check for device presence  and compare device ID
-  ret = SI7021_transaction(I2C_FLAG_WRITE_READ, cmdReadId2, 2, deviceId, 8);
-
-  // Print Device ID
-  printf("%-10s Device ID: 0x%02X\r\n", "Si7021", deviceId[0]);
-
-  // Make sure transfer was successful
-  EFM_ASSERT(ret == i2cTransferDone);
-
-  // Check the Received Device ID
-  EFM_ASSERT(deviceId[0] == SI7021_DEVICE_ID);
-
-  // Initialize LED PWM module
-  initialise_temp_limits();
-
-  // Initialize Periodic timer
-  initialise_timer();
+    // Initialize Periodic timer
+    initialise_timer();
 }
 
 /***************************************************************************//**
  * Ticking function
  ******************************************************************************/
-void i2cspm_app_process_action(void)
+void si_process_action(void)
 {
-  bool local_read_sensor_data;
+    bool local_read_sensor_data;
 
-  sl_atomic_load(local_read_sensor_data, read_sensor_data);
+    sl_atomic_load(local_read_sensor_data, read_sensor_data);
 
-  if (local_read_sensor_data) {
-    // Measure the current humidity and temperature
-    SI7021_measure(&relative_humidity, &temperature);
+    if (local_read_sensor_data) {
+            // Measure the current humidity and temperature
+            SI7021_measure(&relative_humidity, &temperature);
 
-    // Print the current humidity and temperature to vcom
-    printf("\r\n");
-    printf("Relative Humidity = %ld%%\r\n", relative_humidity);
-    printf("Temperature = %ld C\r\n", temperature);
+            // Print the current humidity and temperature to vcom
+            printf("\r\n");
+            printf("Relative Humidity = %ld%%\r\n", relative_humidity);
+            printf("Temperature = %ld C\r\n", temperature);
 
-    // Set appropriate LEDs (led0 or 1) based on temperature
-    set_leds(temperature);
+            // Set appropriate LEDs (led0 or 1) based on temperature
+            set_leds(temperature);
 
-    // Reset the flag
-    local_read_sensor_data = false;
-    sl_atomic_store(read_sensor_data, local_read_sensor_data);
-  }
+            // Reset the flag
+            local_read_sensor_data = false;
+            sl_atomic_store(read_sensor_data, local_read_sensor_data);
+    }
 }

@@ -11,6 +11,16 @@
 #define AS_H_
 
 /***************************************************************************//**
+ * Get Module Device ID
+ ******************************************************************************/
+/**
+ * as_dev_id()
+ *
+ * Retrieves the Device ID of the AS7331
+ */
+void as_dev_id(void);
+
+/***************************************************************************//**
  * Initialize Module
  ******************************************************************************/
 /**
@@ -29,7 +39,7 @@ void as_init(void);
  *
  * Performs a full measurement cycle for the AS7331
  */
-void as_process_action();
+void as_process_action(void);
 
 
 #endif /* AS_H_ */

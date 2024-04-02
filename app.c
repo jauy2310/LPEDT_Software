@@ -32,29 +32,40 @@ void app_init(void)
     sl_sleeptimer_delay_millisecond(1000);
 
     /**
-     * Application Header - begin module initialization
+     * Application Header - check for device identification numbers
      */
-    printf("==============================================\r\n");
-    printf("Beginning Module Initialization...\r\n");
-    printf("==============================================\r\n");
+    printf("=============================================================\r\n");
+    printf("Retrieving Device Information...\r\n");
+    printf("=============================================================\r\n");
 
     /**
-     * Module Initialization - call sensor API to initialize all sensors
+     * Device Identification - readout of device ID numbers
      */
-    i2cspm_app_init();
-    as_init();
-    mpl_init();
+    si_dev_id();
+    as_dev_id();
+    mpl_dev_id();
 
     /**
      * Application Start Message - process action following this block of code
      */
-    printf("==============================================\r\n");
+    printf("=============================================================\r\n");
     printf("Sensors Initialized!\r\n");
-    printf("==============================================\r\n");
-    printf("Welcome to Team 3 - LPHR Software Application.\r\n");
+    printf("=============================================================\r\n");
+    printf("=============================================================\r\n");
+    printf("Project: Team 3 - LPHR Weather Station\r\n");
     printf("Authors: Tommy Ramirez and Jake Uyechi\r\n");
     printf("Term: CU SP'24 ECEN5833\r\n");
-    printf("==============================================\r\n");
+    printf("=============================================================\r\n");
+
+    /**
+     * Module Initialization - begin initializing devices for measurements
+     */
+    printf("=============================================================\r\n");
+    printf("Beginning Sensor Initialization...\r\n");
+    si_init();
+    as_init();
+    mpl_init();
+    printf("=============================================================\r\n");
 }
 
 /***************************************************************************//**
