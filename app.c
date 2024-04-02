@@ -27,16 +27,34 @@
 void app_init(void)
 {
     /**
+     * Clear Screen
+     */
+    printf("\033[2J");
+
+    /**
      * Startup Delay
      */
-    sl_sleeptimer_delay_millisecond(1000);
+    sl_sleeptimer_delay_millisecond(500);
+
+    /**
+     * Application Start Message - process action following this block of code
+     */
+    printf("=============================================================\r\n");
+    printf(">>> Starting Application");
+    for(int i = 0; i < 10; i++) {
+            printf(".");
+            sl_sleeptimer_delay_millisecond(250);
+    }
+    printf("\r\n");
+    printf("Project: Team 3 - LPHR Weather Station\r\n");
+    printf("Authors: Tommy Ramirez and Jake Uyechi\r\n");
+    printf("Term: CU SP'24 ECEN5833\r\n");
 
     /**
      * Application Header - check for device identification numbers
      */
     printf("=============================================================\r\n");
-    printf("Retrieving Device Information...\r\n");
-    printf("=============================================================\r\n");
+    printf(">>> Retrieving Device Information...\r\n");
 
     /**
      * Device Identification - readout of device ID numbers
@@ -46,25 +64,15 @@ void app_init(void)
     mpl_dev_id();
 
     /**
-     * Application Start Message - process action following this block of code
-     */
-    printf("=============================================================\r\n");
-    printf("Sensors Initialized!\r\n");
-    printf("=============================================================\r\n");
-    printf("=============================================================\r\n");
-    printf("Project: Team 3 - LPHR Weather Station\r\n");
-    printf("Authors: Tommy Ramirez and Jake Uyechi\r\n");
-    printf("Term: CU SP'24 ECEN5833\r\n");
-    printf("=============================================================\r\n");
-
-    /**
      * Module Initialization - begin initializing devices for measurements
      */
     printf("=============================================================\r\n");
-    printf("Beginning Sensor Initialization...\r\n");
+    printf(">>> Beginning Sensor Initialization...\r\n");
     si_init();
     as_init();
     mpl_init();
+    printf("=============================================================\r\n");
+    printf(">>> Sensors Initialized!\r\n");
     printf("=============================================================\r\n");
 }
 
