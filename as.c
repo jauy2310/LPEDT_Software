@@ -12,6 +12,7 @@
  ********************************************************/
 #include <as.h>
 #include <stdio.h>
+#include <string.h>
 #include "sl_i2cspm.h"
 #include "sl_i2cspm_instances.h"
 #include "sl_i2cspm_sensor_config.h"
@@ -152,9 +153,50 @@ typedef enum {
 #define AS_REG_CONFIG_CREG3_CCLK_MASK           ((0b11) << (AS_REG_CONFIG_CREG3_CCLK_SHIFT))
 #define AS_REG_CONFIG_CREG3_CCLK(x)             (((x) << (AS_REG_CONFIG_CREG3_CCLK_SHIFT)) & (AS_REG_CONFIG_CREG3_CCLK_MASK))
 
+// STATUS - Status Register
+#define AS_REG_MEAS_STATUS_OUTCONVOF_SHIFT      7
+#define AS_REG_MEAS_STATUS_OUTCONVOF_MASK       ((0b1) << (AS_REG_MEAS_STATUS_OUTCONVOF_SHIFT))
+#define AS_REG_MEAS_STATUS_OUTCONVOF(x)         (((x) << (AS_REG_MEAS_STATUS_OUTCONVOF_SHIFT)) & (AS_REG_MEAS_STATUS_OUTCONVOF_MASK))
+
+#define AS_REG_MEAS_STATUS_MRESOF_SHIFT         6
+#define AS_REG_MEAS_STATUS_MRESOF_MASK          ((0b1) << (AS_REG_MEAS_STATUS_MRESOF_SHIFT))
+#define AS_REG_MEAS_STATUS_MRESOF(x)            (((x) << (AS_REG_MEAS_STATUS_MRESOF_SHIFT)) & (AS_REG_MEAS_STATUS_MRESOF_MASK))
+
+#define AS_REG_MEAS_STATUS_ADCOF_SHIFT          5
+#define AS_REG_MEAS_STATUS_ADCOF_MASK           ((0b1) << (AS_REG_MEAS_STATUS_ADCOF_SHIFT))
+#define AS_REG_MEAS_STATUS_ADCOF(x)             (((x) << (AS_REG_MEAS_STATUS_ADCOF_SHIFT)) & (AS_REG_MEAS_STATUS_ADCOF_MASK))
+
+#define AS_REG_MEAS_STATUS_LDATA_SHIFT          4
+#define AS_REG_MEAS_STATUS_LDATA_MASK           ((0b1) << (AS_REG_MEAS_STATUS_LDATA_SHIFT))
+#define AS_REG_MEAS_STATUS_LDATA(x)             (((x) << (AS_REG_MEAS_STATUS_LDATA_SHIFT)) & (AS_REG_MEAS_STATUS_LDATA_MASK))
+
+#define AS_REG_MEAS_STATUS_NDATA_SHIFT          3
+#define AS_REG_MEAS_STATUS_NDATA_MASK           ((0b1) << (AS_REG_MEAS_STATUS_NDATA_SHIFT))
+#define AS_REG_MEAS_STATUS_NDATA(x)             (((x) << (AS_REG_MEAS_STATUS_NDATA_SHIFT)) & (AS_REG_MEAS_STATUS_NDATA_MASK))
+
+#define AS_REG_MEAS_STATUS_NOTREADY_SHIFT       2
+#define AS_REG_MEAS_STATUS_NOTREADY_MASK        ((0b1) << (AS_REG_MEAS_STATUS_NOTREADY_SHIFT))
+#define AS_REG_MEAS_STATUS_NOTREADY(x)          (((x) << (AS_REG_MEAS_STATUS_NOTREADY_SHIFT)) & (AS_REG_MEAS_STATUS_NOTREADY_MASK))
+
+#define AS_REG_MEAS_STATUS_STANDBYSTATE_SHIFT   1
+#define AS_REG_MEAS_STATUS_STANDBYSTATE_MASK    ((0b1) << (AS_REG_MEAS_STATUS_STANDBYSTATE_SHIFT))
+#define AS_REG_MEAS_STATUS_STANDBYSTATE(x)      (((x) << (AS_REG_MEAS_STATUS_STANDBYSTATE_SHIFT)) & (AS_REG_MEAS_STATUS_STANDBYSTATE_MASK))
+
+#define AS_REG_MEAS_STATUS_POWERSTATE_SHIFT     0
+#define AS_REG_MEAS_STATUS_POWERSTATE_MASK      ((0b1) << (AS_REG_MEAS_STATUS_POWERSTATE_SHIFT))
+#define AS_REG_MEAS_STATUS_POWERSTATE(x)        (((x) << (AS_REG_MEAS_STATUS_POWERSTATE_SHIFT)) & (AS_REG_MEAS_STATUS_POWERSTATE_MASK))
+
 /*********************************************************
  * Local Variables
  ********************************************************/
+// sensor variables
+float temperature;
+uint16_t mres1, mres2, mres3;
+
+// i2c buffer
+#define I2C_BUFFER_LENGTH 16
+uint8_t i2c_write_buf[I2C_BUFFER_LENGTH];
+uint8_t i2c_read_buf[I2C_BUFFER_LENGTH];
 
 /*********************************************************
  * Local Functions
@@ -223,6 +265,17 @@ static I2C_TransferReturn_TypeDef AS7331_transaction(uint16_t flag,
 }
 
 /**
+ * flush_buffers
+ *
+ * Clears I2C buffers
+ */
+void flush_buffers(void)
+{
+    memset(i2c_write_buf, 0, I2C_BUFFER_LENGTH);
+    memset(i2c_read_buf, 0, I2C_BUFFER_LENGTH);
+}
+
+/**
  * AS7331_ChangeMode()
  *
  * Changes the mode (measurement/configuration) of the AS7331 sensor
@@ -233,23 +286,24 @@ void AS7331_ChangeMode(uint8_t new_mode)
 {
     // initialize I2C transaction variables
     I2C_TransferReturn_TypeDef ret;
-    uint8_t as_read_osr_sequence[1] = {AS_REG_CONFIG_OSR};
-    uint8_t as_osr_status[2];
+    flush_buffers();
+    i2c_write_buf[0] = AS_REG_CONFIG_OSR;
 
     // read the DOS bits of the OSR
-    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, as_read_osr_sequence, 1, as_osr_status, 2);
+    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 2);
 
     // set to configuration mode
     if(new_mode ==  AS_CONFIG_MODE_CONFIGURATION) {
             // check if mode is not already in configuration mode
-            if((as_osr_status[0] & AS_REG_CONFIG_OSR_DOS_MASK) != 0b010){
+            if((i2c_read_buf[0] & AS_REG_CONFIG_OSR_DOS_MASK) != 0b010){
                     // create I2C transaction variable to rewrite the OSR
-                    uint8_t new_dos = ((as_osr_status[0] & ~(AS_REG_CONFIG_OSR_DOS_MASK)) | 0b010);
-                    uint8_t set_config_mode_sequence[2] = {AS_REG_CONFIG_OSR, new_dos};
+                    uint8_t new_dos = ((i2c_read_buf[0] & ~(AS_REG_CONFIG_OSR_DOS_MASK)) | 0b010);
+                    flush_buffers();
+                    i2c_write_buf[0] = AS_REG_CONFIG_OSR;
+                    i2c_write_buf[1] = new_dos;
 
                     // perform transaction
-                    uint8_t tmp[1] = {0};
-                    ret = AS7331_transaction(I2C_FLAG_WRITE, set_config_mode_sequence, 2, tmp, 1);
+                    ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
 
                     // assert successful transaction and indicate mode change
                     EFM_ASSERT(ret == i2cTransferDone);
@@ -257,14 +311,15 @@ void AS7331_ChangeMode(uint8_t new_mode)
     // set to measurement mode
     } else if (new_mode == AS_CONFIG_MODE_MEASUREMENT){
             // check if mode is not already in measurement mode
-            if((as_osr_status[0] & AS_REG_CONFIG_OSR_DOS_MASK) != 0b011){
+            if((i2c_read_buf[0] & AS_REG_CONFIG_OSR_DOS_MASK) != 0b011){
                     // create I2C transaction variable to rewrite the OSR
-                    uint8_t new_dos = ((as_osr_status[0] & ~(AS_REG_CONFIG_OSR_DOS_MASK)) | 0b011);
-                    uint8_t set_config_mode_sequence[2] = {AS_REG_CONFIG_OSR, new_dos};
+                    uint8_t new_dos = ((i2c_read_buf[0] & ~(AS_REG_CONFIG_OSR_DOS_MASK)) | 0b011);
+                    flush_buffers();
+                    i2c_write_buf[0] = AS_REG_CONFIG_OSR;
+                    i2c_write_buf[1] = new_dos;
 
                     // perform transaction
-                    uint8_t tmp[1] = {0};
-                    ret = AS7331_transaction(I2C_FLAG_WRITE, set_config_mode_sequence, 2, tmp, 1);
+                    ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
 
                     // assert successful transaction and indicate mode change
                     EFM_ASSERT(ret == i2cTransferDone);
@@ -274,6 +329,32 @@ void AS7331_ChangeMode(uint8_t new_mode)
 
     // assert a finished transfer and return
     EFM_ASSERT(ret == i2cTransferDone);
+}
+
+void AS7331_GetTemperature()
+{
+    // read the current OSR value
+    I2C_TransferReturn_TypeDef ret;
+    flush_buffers();
+    i2c_write_buf[0] = AS_REG_CONFIG_OSR;
+    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 1);
+    EFM_ASSERT(ret == i2cTransferDone);
+
+    // keep the OSR the same, but force the SS bit to 1 and write value back to OSR
+    uint8_t osr_new = (i2c_read_buf[0] | AS_REG_CONFIG_OSR_SS(1));
+    i2c_write_buf[1] = osr_new;
+    ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
+    EFM_ASSERT(ret == i2cTransferDone);
+
+    // create an I2C transaction to read temperature register
+    flush_buffers();
+    i2c_write_buf[0] = AS_REG_MEAS_TEMP;
+    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 2);
+    EFM_ASSERT(ret == i2cTransferDone);
+
+    // with the result buffer, store into local file variable
+    uint16_t tmp = (((uint16_t)i2c_read_buf[1]) << 8) | ((uint16_t)i2c_read_buf[0]);
+    temperature = (((float)tmp * 0.05) - 66.9);
 }
 
 /*********************************************************
@@ -286,23 +367,23 @@ void as_dev_id(void)
 
     // create I2C variables
     I2C_TransferReturn_TypeDef ret;
-    uint8_t as_read_id_sequence[1] = {AS_REG_CONFIG_AGEN};
-    uint8_t as_device_id[8];
+    flush_buffers();
+    i2c_write_buf[0] = AS_REG_CONFIG_AGEN;
 
     // Wait for sensor to become ready
     sl_sleeptimer_delay_millisecond(80);
 
     // Check for device presence  and compare device ID
-    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, as_read_id_sequence, 1, as_device_id, 8);
+    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 1);
 
     // Print Device ID
-    printf("%-10s Device ID: 0x%02X\r\n", AS_NAME, as_device_id[0]);
+    printf("%-10s Device ID: 0x%02X\r\n", AS_NAME, i2c_read_buf[0]);
 
     // Make sure transfer was successful
     EFM_ASSERT(ret == i2cTransferDone);
 
     // Check the Received Device ID
-    EFM_ASSERT(as_device_id[0] == AS_CONFIG_DEVICE_ID);
+    EFM_ASSERT(i2c_read_buf[0] == AS_CONFIG_DEVICE_ID);
 }
 
 void as_init(void)
@@ -313,8 +394,7 @@ void as_init(void)
 
     // create I2C parameters
     I2C_TransferReturn_TypeDef ret;
-    uint8_t transaction_buffer[2];
-    uint8_t tmp[1] = {0};
+    flush_buffers();
 
     // OSR - Operational State Register
 
@@ -325,9 +405,9 @@ void as_init(void)
                   (AS_REG_CONFIG_OSR_DOS(0b010));
 
     // send an I2C transaction to change OSR
-    transaction_buffer[0] = AS_REG_CONFIG_OSR;
-    transaction_buffer[1] = osr;
-    ret = AS7331_transaction(I2C_FLAG_WRITE, transaction_buffer, 2, tmp, 1);
+    i2c_write_buf[0] = AS_REG_CONFIG_OSR;
+    i2c_write_buf[1] = osr;
+    ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
     printf("[%10s] OSR set - new value: 0x%02X\r\n", AS_NAME, osr);
     EFM_ASSERT(ret == i2cTransferDone);
 
@@ -338,9 +418,9 @@ void as_init(void)
                     (AS_REG_CONFIG_CREG1_TIME(CREG1_TIME_64));
 
     // send an I2C transaction to change CREG1
-    transaction_buffer[0] = AS_REG_CONFIG_CREG1;
-    transaction_buffer[1] = creg1;
-    ret = AS7331_transaction(I2C_FLAG_WRITE, transaction_buffer, 2, tmp, 1);
+    i2c_write_buf[0] = AS_REG_CONFIG_CREG1;
+    i2c_write_buf[1] = creg1;
+    ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
     printf("[%10s] CREG1 set - new value: 0x%02X\r\n", AS_NAME, creg1);
     EFM_ASSERT(ret == i2cTransferDone);
 
@@ -351,24 +431,24 @@ void as_init(void)
                     (AS_REG_CONFIG_CREG2_EN_DIV(0));
 
     // send and I2C transaction to change CREG2
-    transaction_buffer[0] = AS_REG_CONFIG_CREG2;
-    transaction_buffer[1] = creg2;
-    ret = AS7331_transaction(I2C_FLAG_WRITE, transaction_buffer, 2, tmp, 1);
+    i2c_write_buf[0] = AS_REG_CONFIG_CREG2;
+    i2c_write_buf[1] = creg2;
+    ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
     printf("[%10s] CREG2 set - new value: 0x%02X\r\n", AS_NAME, creg2);
     EFM_ASSERT(ret == i2cTransferDone);
 
     // CREG3 - Control Register 3
 
     // set the CREG3 to default values
-    uint8_t creg3 = (AS_REG_CONFIG_CREG3_MMODE(01)) | \
+    uint8_t creg3 = (AS_REG_CONFIG_CREG3_MMODE(0b01)) | \
                     (AS_REG_CONFIG_CREG3_SB(0)) | \
                     (AS_REG_CONFIG_CREG3_RDYOD(0)) | \
-                    (AS_REG_CONFIG_CREG3_CCLK(00));
+                    (AS_REG_CONFIG_CREG3_CCLK(0b00));
 
     // send and I2C transaction to change CREG3
-    transaction_buffer[0] = AS_REG_CONFIG_CREG3;
-    transaction_buffer[1] = creg3;
-    ret = AS7331_transaction(I2C_FLAG_WRITE, transaction_buffer, 2, tmp, 1);
+    i2c_write_buf[0] = AS_REG_CONFIG_CREG3;
+    i2c_write_buf[1] = creg3;
+    ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
     printf("[%10s] CREG3 set - new value: 0x%02X\r\n", AS_NAME, creg3);
     EFM_ASSERT(ret == i2cTransferDone);
 
@@ -379,5 +459,11 @@ void as_init(void)
 
 void as_process_action(void)
 {
+    /*********************
+     * TEMPERATURE
+     *********************/
+    AS7331_GetTemperature();
+    printf("[%10s] Temperature: %.2f\r\n", AS_NAME, temperature);
+
     return;
 }
