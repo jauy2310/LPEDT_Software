@@ -186,12 +186,41 @@ typedef enum {
 #define AS_REG_MEAS_STATUS_POWERSTATE_MASK      ((0b1) << (AS_REG_MEAS_STATUS_POWERSTATE_SHIFT))
 #define AS_REG_MEAS_STATUS_POWERSTATE(x)        (((x) << (AS_REG_MEAS_STATUS_POWERSTATE_SHIFT)) & (AS_REG_MEAS_STATUS_POWERSTATE_MASK))
 
+// UVA lookup table for FSR (<=16 bit resolution)
+// For each resolution bit higher than 16, half the values in this table
+// Divide values in table by ((nbits - 16)^2)
+const uint32_t uva_fsr[12] = {
+        156, 312, 624, 1248, 2496, 9984,
+        4992, 19968, 39936, 79872, 159744, 319488
+};
+
+// UVB lookup table for FSR (<=16 bit resolution)
+// For each resolution bit higher than 16, half the values in this table
+// Divide values in table by ((nbits - 16)^2)
+const uint32_t uvb_fsr[12] = {
+        204, 408, 816, 1632, 3264, 13056,
+        6528, 26112, 52224, 104448, 208896, 417792
+};
+
+// UVC lookup table for FSR (<=13 bit resolution)
+// For 14-17 bit resolution, half the values in this table
+// For each resolution bit higher than 17, half the values in the table again
+const uint32_t uvc_fsr[12] = {
+        98, 196, 392, 784, 1568, 6272,
+        3136, 12544, 25088, 50176, 100352, 200704
+};
+
+// enum for UV channels
+typedef enum {
+    UVA, UVB, UVC
+} UV_CHANNEL_t;
+
 /*********************************************************
  * Local Variables
  ********************************************************/
 // sensor variables
 float temperature;
-uint16_t mres1, mres2, mres3;
+float uva, uvb, uvc;
 
 // i2c buffer
 #define I2C_BUFFER_LENGTH 16
@@ -331,7 +360,12 @@ void AS7331_ChangeMode(uint8_t new_mode)
     EFM_ASSERT(ret == i2cTransferDone);
 }
 
-void AS7331_GetTemperature()
+/**
+ * AS7331_StartCMDTransfer()
+ *
+ * Start a CMD data transfer by setting the OSR:SS bit to 1
+ */
+void AS7331_StartCMDTransfer()
 {
     // read the current OSR value
     I2C_TransferReturn_TypeDef ret;
@@ -345,8 +379,86 @@ void AS7331_GetTemperature()
     i2c_write_buf[1] = osr_new;
     ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
     EFM_ASSERT(ret == i2cTransferDone);
+}
+
+/**
+ * AS7331_GetFSR()
+ *
+ * Return the FSR value for the given parameters
+ *
+ * @param type              UVA, UVB, or UVC
+ * @param gain              The current gain of the sensor
+ * @param time              The conversion time for the sensor
+ */
+uint32_t AS7331_GetFSR(UV_CHANNEL_t type, CREG1_GAIN_t gain, CREG1_TIME_t time)
+{
+    uint8_t resolution = 10;
+    while(time > 1) {
+            time = time >> 1;
+            resolution++;
+    }
+
+    switch(type)
+    {
+        /*
+         * UVA FSR
+         */
+        case(UVA):
+                if(resolution <= 16) {
+                        // low-resolution, return from table as-is
+                        return uva_fsr[gain];
+                } else {
+                        // high-resolution, return after dividing
+                        return (uva_fsr[gain] >> (resolution - 16));
+                }
+                break;
+
+        /*
+         * UVB FSR
+         */
+        case(UVB):
+                if(resolution <= 16) {
+                        // low-resolution, return from table as-is
+                        return uvb_fsr[gain];
+                } else {
+                        // high-resolution, return after dividing
+                        return (uvb_fsr[gain] >> (resolution - 16));
+                }
+                break;
+
+        /*
+         * UVC FSR
+         */
+        case(UVC):
+                if(resolution <= 13) {
+                        // low-resolution, return from table as-is
+                        return uvc_fsr[gain];
+                } else if(resolution > 13 && resolution <= 17) {
+                        // mid-resolution, return after dividing by 2
+                        return (uvc_fsr[gain] >> 1);
+                } else {
+                        // high-resolution, return after dividing
+                        return ((uvc_fsr[gain] >> 1) >> (resolution - 17));
+                }
+                break;
+
+        default:
+            return 0;
+    }
+}
+
+/**
+ * AS7331_GetTemperature()
+ *
+ * Calculate the AS7331's temperature
+ */
+void AS7331_GetTemperature()
+{
+    // start a command transfer
+    AS7331_StartCMDTransfer();
 
     // create an I2C transaction to read temperature register
+    I2C_TransferReturn_TypeDef ret;
     flush_buffers();
     i2c_write_buf[0] = AS_REG_MEAS_TEMP;
     ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 2);
@@ -356,6 +468,88 @@ void AS7331_GetTemperature()
     uint16_t tmp = (((uint16_t)i2c_read_buf[1]) << 8) | ((uint16_t)i2c_read_buf[0]);
     temperature = (((float)tmp * 0.05) - 66.9);
 }
+
+/**
+ * AS7331_GetUV()
+ *
+ * Calculate UV Irradiance
+ *
+ * @param type              UV Type
+ */
+void AS7331_GetUV(UV_CHANNEL_t type)
+{
+    // start a command transfer
+    AS7331_StartCMDTransfer();
+
+    // read and store the conversion time interval and gain
+    uint16_t time_interval = 0;
+    CREG1_TIME_t time = 0;
+    CREG1_GAIN_t gain = 0;
+    I2C_TransferReturn_TypeDef ret;
+    flush_buffers();
+    i2c_write_buf[0] = AS_REG_CONFIG_CREG1;
+    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 2);
+    EFM_ASSERT(ret == i2cTransferDone);
+    gain = (CREG1_GAIN_t)((i2c_read_buf[0] & AS_REG_CONFIG_CREG1_GAIN_MASK) >> 4);
+    time_interval = (1 << (i2c_read_buf[0] & AS_REG_CONFIG_CREG1_TIME_MASK));
+    time = (CREG1_TIME_t)(i2c_read_buf[0] & AS_REG_CONFIG_CREG1_TIME_MASK);
+
+    // start a command transfer
+    AS7331_StartCMDTransfer();
+
+    // read and store the conversion clock frequency
+    uint32_t clock_frequency = 0;
+    flush_buffers();
+    i2c_write_buf[0] = AS_REG_CONFIG_CREG3;
+    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 2);
+    EFM_ASSERT(ret == i2cTransferDone);
+    clock_frequency = (1024000 << (i2c_read_buf[0] & AS_REG_CONFIG_CREG3_CCLK_MASK));
+
+    // get FSR
+    uint32_t fsr = AS7331_GetFSR(type, gain, time);
+
+    // start a command transfer
+    AS7331_StartCMDTransfer();
+
+    // create an I2C transaction to read UV register
+    flush_buffers();
+    switch(type) {
+        case UVA:
+            i2c_write_buf[0] = AS_REG_MEAS_MRES1_A;
+            break;
+        case UVB:
+            i2c_write_buf[0] = AS_REG_MEAS_MRES2_B;
+            break;
+        case UVC:
+            i2c_write_buf[0] = AS_REG_MEAS_MRES3_C;
+            break;
+        default:
+            // default to UVA channel
+            i2c_write_buf[0] = AS_REG_MEAS_MRES1_A;
+            break;
+    }
+    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 2);
+    EFM_ASSERT(ret == i2cTransferDone);
+
+    // with the resulting buffer, calculate irradiance
+    uint16_t mres = (((uint16_t)i2c_read_buf[1]) << 8) | ((uint16_t)i2c_read_buf[0]);
+    uint16_t tmp = (float)(((float)fsr)/(time_interval * clock_frequency)) * mres;
+    switch(type) {
+        case UVA:
+            uva = tmp;
+            break;
+        case UVB:
+            uvb = tmp;
+            break;
+        case UVC:
+            uvc = tmp;
+            break;
+        default:
+            // default to UVA channel
+            uva = tmp;
+    }
+}
+
 
 /*********************************************************
  * Global Functions
@@ -464,6 +658,16 @@ void as_process_action(void)
      *********************/
     AS7331_GetTemperature();
     printf("[%10s] Temperature: %.2f\r\n", AS_NAME, temperature);
+
+    AS7331_GetUV(UVA);
+    printf("[%10s] UVA Irradiance: %.3f\r\n", AS_NAME, uva);
+
+    AS7331_GetUV(UVB);
+    printf("[%10s] UVB Irradiance: %.3f\r\n", AS_NAME, uvb);
+
+    AS7331_GetUV(UVC);
+    printf("[%10s] UVC Irradiance: %.3f\r\n", AS_NAME, uvc);
+
 
     return;
 }
