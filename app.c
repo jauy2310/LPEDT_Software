@@ -43,7 +43,7 @@ void app_init(void)
     printf(">>> Starting Application");
     for(int i = 0; i < 10; i++) {
             printf(".");
-            sl_sleeptimer_delay_millisecond(250);
+            sl_sleeptimer_delay_millisecond(50);
     }
     printf("\r\n");
     printf("Project: Team 3 - LPHR Weather Station\r\n");

@@ -321,39 +321,35 @@ void AS7331_ChangeMode(uint8_t new_mode)
     // read the DOS bits of the OSR
     ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 2);
 
+    // create the new DOS
+    uint8_t new_dos = 0;
+
     // set to configuration mode
     if(new_mode ==  AS_CONFIG_MODE_CONFIGURATION) {
             // check if mode is not already in configuration mode
             if((i2c_read_buf[0] & AS_REG_CONFIG_OSR_DOS_MASK) != 0b010){
                     // create I2C transaction variable to rewrite the OSR
-                    uint8_t new_dos = ((i2c_read_buf[0] & ~(AS_REG_CONFIG_OSR_DOS_MASK)) | 0b010);
-                    flush_buffers();
-                    i2c_write_buf[0] = AS_REG_CONFIG_OSR;
-                    i2c_write_buf[1] = new_dos;
-
-                    // perform transaction
-                    ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
-
-                    // assert successful transaction and indicate mode change
-                    EFM_ASSERT(ret == i2cTransferDone);
+                    new_dos = ((i2c_read_buf[0] & ~(AS_REG_CONFIG_OSR_DOS_MASK)) | 0b010);
             }
     // set to measurement mode
     } else if (new_mode == AS_CONFIG_MODE_MEASUREMENT){
             // check if mode is not already in measurement mode
             if((i2c_read_buf[0] & AS_REG_CONFIG_OSR_DOS_MASK) != 0b011){
                     // create I2C transaction variable to rewrite the OSR
-                    uint8_t new_dos = ((i2c_read_buf[0] & ~(AS_REG_CONFIG_OSR_DOS_MASK)) | 0b011);
-                    flush_buffers();
-                    i2c_write_buf[0] = AS_REG_CONFIG_OSR;
-                    i2c_write_buf[1] = new_dos;
-
-                    // perform transaction
-                    ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
-
-                    // assert successful transaction and indicate mode change
-                    EFM_ASSERT(ret == i2cTransferDone);
+                    new_dos = ((i2c_read_buf[0] & ~(AS_REG_CONFIG_OSR_DOS_MASK)) | 0b011);
             }
     }
+
+    // create I2C transaction
+    flush_buffers();
+    i2c_write_buf[0] = AS_REG_CONFIG_OSR;
+    i2c_write_buf[1] = new_dos;
+
+    // perform transaction
+    ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
+
+    // assert successful transaction and indicate mode change
+    EFM_ASSERT(ret == i2cTransferDone);
 
 
     // assert a finished transfer and return
@@ -367,12 +363,18 @@ void AS7331_ChangeMode(uint8_t new_mode)
  */
 void AS7331_StartCMDTransfer()
 {
+    // switch to config mode
+    AS7331_ChangeMode(AS_CONFIG_MODE_CONFIGURATION);
+
     // read the current OSR value
     I2C_TransferReturn_TypeDef ret;
     flush_buffers();
     i2c_write_buf[0] = AS_REG_CONFIG_OSR;
     ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 1);
     EFM_ASSERT(ret == i2cTransferDone);
+
+    // switch back to measurement mode
+    AS7331_ChangeMode(AS_CONFIG_MODE_MEASUREMENT);
 
     // keep the OSR the same, but force the SS bit to 1 and write value back to OSR
     uint8_t osr_new = (i2c_read_buf[0] | AS_REG_CONFIG_OSR_SS(1));
@@ -454,9 +456,6 @@ uint32_t AS7331_GetFSR(UV_CHANNEL_t type, CREG1_GAIN_t gain, CREG1_TIME_t time)
  */
 void AS7331_GetTemperature()
 {
-    // start a command transfer
-    AS7331_StartCMDTransfer();
-
     // create an I2C transaction to read temperature register
     I2C_TransferReturn_TypeDef ret;
     flush_buffers();
@@ -478,8 +477,8 @@ void AS7331_GetTemperature()
  */
 void AS7331_GetUV(UV_CHANNEL_t type)
 {
-    // start a command transfer
-    AS7331_StartCMDTransfer();
+    // change to config mode
+    AS7331_ChangeMode(AS_CONFIG_MODE_CONFIGURATION);
 
     // read and store the conversion time interval and gain
     uint16_t time_interval = 0;
@@ -494,9 +493,6 @@ void AS7331_GetUV(UV_CHANNEL_t type)
     time_interval = (1 << (i2c_read_buf[0] & AS_REG_CONFIG_CREG1_TIME_MASK));
     time = (CREG1_TIME_t)(i2c_read_buf[0] & AS_REG_CONFIG_CREG1_TIME_MASK);
 
-    // start a command transfer
-    AS7331_StartCMDTransfer();
-
     // read and store the conversion clock frequency
     uint32_t clock_frequency = 0;
     flush_buffers();
@@ -508,10 +504,11 @@ void AS7331_GetUV(UV_CHANNEL_t type)
     // get FSR
     uint32_t fsr = AS7331_GetFSR(type, gain, time);
 
-    // start a command transfer
-    AS7331_StartCMDTransfer();
+    // switch back to measurement mode
+    AS7331_ChangeMode(AS_CONFIG_MODE_MEASUREMENT);
 
     // create an I2C transaction to read UV register
+    AS7331_StartCMDTransfer();
     flush_buffers();
     switch(type) {
         case UVA:
@@ -533,7 +530,7 @@ void AS7331_GetUV(UV_CHANNEL_t type)
 
     // with the resulting buffer, calculate irradiance
     uint16_t mres = (((uint16_t)i2c_read_buf[1]) << 8) | ((uint16_t)i2c_read_buf[0]);
-    uint16_t tmp = (float)(((float)fsr)/(time_interval * clock_frequency)) * mres;
+    float tmp = (float)(((float)fsr)/(time_interval * clock_frequency)) * mres;
     switch(type) {
         case UVA:
             uva = tmp;
@@ -567,7 +564,7 @@ void as_dev_id(void)
     // Wait for sensor to become ready
     sl_sleeptimer_delay_millisecond(80);
 
-    // Check for device presence  and compare device ID
+    // Check for device presence and compare device ID
     ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 1);
 
     // Print Device ID
@@ -659,12 +656,12 @@ void as_process_action(void)
     AS7331_GetTemperature();
     printf("[%10s] Temperature: %.2f\r\n", AS_NAME, temperature);
 
-    AS7331_GetUV(UVA);
-    printf("[%10s] UVA Irradiance: %.3f\r\n", AS_NAME, uva);
-
-    AS7331_GetUV(UVB);
-    printf("[%10s] UVB Irradiance: %.3f\r\n", AS_NAME, uvb);
-
+//    AS7331_GetUV(UVA);
+//    printf("[%10s] UVA Irradiance: %.3f\r\n", AS_NAME, uva);
+//
+//    AS7331_GetUV(UVB);
+//    printf("[%10s] UVB Irradiance: %.3f\r\n", AS_NAME, uvb);
+//
     AS7331_GetUV(UVC);
     printf("[%10s] UVC Irradiance: %.3f\r\n", AS_NAME, uvc);
 
