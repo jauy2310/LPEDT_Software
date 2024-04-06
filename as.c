@@ -219,8 +219,8 @@ typedef enum {
  * Local Variables
  ********************************************************/
 // sensor variables
-float temperature;
-float uva, uvb, uvc;
+float temperature; // degrees Celsius
+float uva, uvb, uvc; // nW/cm^2
 
 // i2c buffer
 #define I2C_BUFFER_LENGTH 16
@@ -322,7 +322,7 @@ void AS7331_ChangeMode(uint8_t new_mode)
     ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 2);
 
     // create the new DOS
-    uint8_t new_dos = 0;
+    uint8_t new_dos = i2c_read_buf[0];
 
     // set to configuration mode
     if(new_mode ==  AS_CONFIG_MODE_CONFIGURATION) {
@@ -350,10 +350,6 @@ void AS7331_ChangeMode(uint8_t new_mode)
 
     // assert successful transaction and indicate mode change
     EFM_ASSERT(ret == i2cTransferDone);
-
-
-    // assert a finished transfer and return
-    EFM_ASSERT(ret == i2cTransferDone);
 }
 
 /**
@@ -363,9 +359,6 @@ void AS7331_ChangeMode(uint8_t new_mode)
  */
 void AS7331_StartCMDTransfer()
 {
-    // switch to config mode
-    AS7331_ChangeMode(AS_CONFIG_MODE_CONFIGURATION);
-
     // read the current OSR value
     I2C_TransferReturn_TypeDef ret;
     flush_buffers();
@@ -373,11 +366,16 @@ void AS7331_StartCMDTransfer()
     ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 1);
     EFM_ASSERT(ret == i2cTransferDone);
 
+    // save old buffer data
+    uint8_t osr_old = i2c_read_buf[0];
+
     // switch back to measurement mode
     AS7331_ChangeMode(AS_CONFIG_MODE_MEASUREMENT);
 
     // keep the OSR the same, but force the SS bit to 1 and write value back to OSR
-    uint8_t osr_new = (i2c_read_buf[0] | AS_REG_CONFIG_OSR_SS(1));
+    flush_buffers();
+    uint8_t osr_new = (osr_old | AS_REG_CONFIG_OSR_SS(1));
+    i2c_write_buf[0] = AS_REG_CONFIG_OSR;
     i2c_write_buf[1] = osr_new;
     ret = AS7331_transaction(I2C_FLAG_WRITE, i2c_write_buf, 2, i2c_read_buf, 1);
     EFM_ASSERT(ret == i2cTransferDone);
@@ -395,8 +393,8 @@ void AS7331_StartCMDTransfer()
 uint32_t AS7331_GetFSR(UV_CHANNEL_t type, CREG1_GAIN_t gain, CREG1_TIME_t time)
 {
     uint8_t resolution = 10;
-    while(time > 1) {
-            time = time >> 1;
+    while(time > 0) {
+            time = time - 1;
             resolution++;
     }
 
@@ -458,6 +456,12 @@ void AS7331_GetTemperature()
 {
     // create an I2C transaction to read temperature register
     I2C_TransferReturn_TypeDef ret;
+
+    // start CMD measurement
+    AS7331_StartCMDTransfer();
+    sl_sleeptimer_delay_millisecond(1000);
+
+    // create I2C transaction
     flush_buffers();
     i2c_write_buf[0] = AS_REG_MEAS_TEMP;
     ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 2);
@@ -504,11 +508,19 @@ void AS7331_GetUV(UV_CHANNEL_t type)
     // get FSR
     uint32_t fsr = AS7331_GetFSR(type, gain, time);
 
-    // switch back to measurement mode
+    // switch back to measurement mode and wait for ready bit
     AS7331_ChangeMode(AS_CONFIG_MODE_MEASUREMENT);
+    AS7331_StartCMDTransfer();
+    flush_buffers();
+    i2c_write_buf[0] = AS_REG_MEAS_OSR_STATUS;
+    while(1) {
+            ret = AS7331_transaction(I2C_FLAG_WRITE_READ, i2c_write_buf, 1, i2c_read_buf, 2);
+            if(!(i2c_read_buf[1] & AS_REG_MEAS_STATUS_NOTREADY_MASK)) {
+                    break;
+            }
+    }
 
     // create an I2C transaction to read UV register
-    AS7331_StartCMDTransfer();
     flush_buffers();
     switch(type) {
         case UVA:
@@ -530,7 +542,7 @@ void AS7331_GetUV(UV_CHANNEL_t type)
 
     // with the resulting buffer, calculate irradiance
     uint16_t mres = (((uint16_t)i2c_read_buf[1]) << 8) | ((uint16_t)i2c_read_buf[0]);
-    float tmp = (float)(((float)fsr)/(time_interval * clock_frequency)) * mres;
+    float tmp = (float)(((float)fsr)/(time_interval * clock_frequency)) * mres * 1000;
     switch(type) {
         case UVA:
             uva = tmp;
@@ -654,16 +666,16 @@ void as_process_action(void)
      * TEMPERATURE
      *********************/
     AS7331_GetTemperature();
-    printf("[%10s] Temperature: %.2f\r\n", AS_NAME, temperature);
+    printf("[%10s] Temperature: %.2f%cC\r\n", AS_NAME, temperature, 248);
 
-//    AS7331_GetUV(UVA);
-//    printf("[%10s] UVA Irradiance: %.3f\r\n", AS_NAME, uva);
-//
-//    AS7331_GetUV(UVB);
-//    printf("[%10s] UVB Irradiance: %.3f\r\n", AS_NAME, uvb);
-//
+    AS7331_GetUV(UVA);
+    printf("[%10s] UVA Irradiance: %.6f nW/cm^2\r\n", AS_NAME, uva);
+
+    AS7331_GetUV(UVB);
+    printf("[%10s] UVB Irradiance: %.6f nW/cm^2\r\n", AS_NAME, uvb);
+
     AS7331_GetUV(UVC);
-    printf("[%10s] UVC Irradiance: %.3f\r\n", AS_NAME, uvc);
+    printf("[%10s] UVC Irradiance: %.6f nW/cm^2\r\n", AS_NAME, uvc);
 
 
     return;
