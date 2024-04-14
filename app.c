@@ -86,6 +86,6 @@ void app_process_action(void)
    */
 //  i2cspm_app_process_action();
 //    as_process_action();
-//	mpl_process_action();
+	mpl_process_action();
     sl_sleeptimer_delay_millisecond(1000);
 }

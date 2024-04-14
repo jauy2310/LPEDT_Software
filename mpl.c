@@ -23,6 +23,9 @@
 /*********************************************************
  * Macros
  ********************************************************/
+// define sensor name
+#define MPL_NAME                                 	("MPL3115A2")
+
 // define the AS7331 configuration settings
 #define MPL_CONFIG_I2C_DEVICE                     	(sl_i2cspm_sensor)
 #define MPL_CONFIG_SLAVE_ADDRESS                  	0x60
@@ -112,6 +115,70 @@ typedef enum {
 	FIFO_CIRCULARBUFF,
 	FIFO_FULLSTOP
 } FIFO_MODE_t;
+
+/*
+ * Bitwise Register Macros
+ */
+
+// STATUS
+#define MPL_REG_DR_STATUS_PTOW_SHIFT				7
+#define MPL_REG_DR_STATUS_PTOW_MASK					((0b1) << (MPL_REG_DR_STATUS_PTOW_SHIFT))
+#define MPL_REG_DR_STATUS_PTOW(x)					(((x) << (MPL_REG_DR_STATUS_PTOW_SHIFT)) & (MPL_REG_DR_STATUS_PTOW_MASK))
+
+#define MPL_REG_DR_STATUS_POW_SHIFT					6
+#define MPL_REG_DR_STATUS_POW_MASK					((0b1) << (MPL_REG_DR_STATUS_POW_SHIFT))
+#define MPL_REG_DR_STATUS_POW(x)					(((x) << (MPL_REG_DR_STATUS_POW_SHIFT)) & (MPL_REG_DR_STATUS_POW_MASK))
+
+#define MPL_REG_DR_STATUS_TOW_SHIFT					5
+#define MPL_REG_DR_STATUS_TOW_MASK					((0b1) << (MPL_REG_DR_STATUS_TOW_SHIFT))
+#define MPL_REG_DR_STATUS_TOW(x)					(((x) << (MPL_REG_DR_STATUS_TOW_SHIFT)) & (MPL_REG_DR_STATUS_TOW_MASK))
+
+#define MPL_REG_DR_STATUS_PTDR_SHIFT				3
+#define MPL_REG_DR_STATUS_PTDR_MASK					((0b1) << (MPL_REG_DR_STATUS_PTDR_SHIFT))
+#define MPL_REG_DR_STATUS_PTDR(x)					(((x) << (MPL_REG_DR_STATUS_PTDR_SHIFT)) & (MPL_REG_DR_STATUS_PTDR_MASK))
+
+#define MPL_REG_DR_STATUS_PDR_SHIFT					2
+#define MPL_REG_DR_STATUS_PDR_MASK					((0b1) << (MPL_REG_DR_STATUS_PDR_SHIFT))
+#define MPL_REG_DR_STATUS_PDR(x)					(((x) << (MPL_REG_DR_STATUS_PDR_SHIFT)) & (MPL_REG_DR_STATUS_PDR_MASK))
+
+#define MPL_REG_DR_STATUS_TDR_SHIFT					1
+#define MPL_REG_DR_STATUS_TDR_MASK					((0b1) << (MPL_REG_DR_STATUS_TDR_SHIFT))
+#define MPL_REG_DR_STATUS_TDR(x)					(((x) << (MPL_REG_DR_STATUS_TDR_SHIFT)) & (MPL_REG_DR_STATUS_TDR_MASK))
+
+// PT_DATA_CFG
+#define MPL_REG_PT_DATA_CFG_DREM_SHIFT				2
+#define MPL_REG_PT_DATA_CFG_DREM_MASK				((0b1) << (MPL_REG_PT_DATA_CFG_DREM_SHIFT))
+#define MPL_REG_PT_DATA_CFG_DREM(x)					(((x) << (MPL_REG_PT_DATA_CFG_DREM_SHIFT)) & (MPL_REG_PT_DATA_CFG_DREM_MASK))
+
+#define MPL_REG_PT_DATA_CFG_PDEFE_SHIFT				1
+#define MPL_REG_PT_DATA_CFG_PDEFE_MASK				((0b1) << (MPL_REG_PT_DATA_CFG_PDEFE_SHIFT))
+#define MPL_REG_PT_DATA_CFG_PDEFE(x)				(((x) << (MPL_REG_PT_DATA_CFG_PDEFE_SHIFT)) & (MPL_REG_PT_DATA_CFG_PDEFE_MASK))
+
+#define MPL_REG_PT_DATA_CFG_TDEFE_SHIFT				0
+#define MPL_REG_PT_DATA_CFG_TDEFE_MASK				((0b1) << (MPL_REG_PT_DATA_CFG_TDEFE_SHIFT))
+#define MPL_REG_PT_DATA_CFG_TDEFE(x)				(((x) << (MPL_REG_PT_DATA_CFG_TDEFE_SHIFT)) & (MPL_REG_PT_DATA_CFG_TDEFE_MASK))
+
+// CTRL_REG1
+#define MPL_REG_CTRL_REG1_ALT_SHIFT					7
+#define MPL_REG_CTRL_REG1_ALT_MASK					((0b1) << (MPL_REG_CTRL_REG1_ALT_SHIFT))
+#define MPL_REG_CTRL_REG1_ALT(x)					(((x) << (MPL_REG_CTRL_REG1_ALT_SHIFT)) & (MPL_REG_CTRL_REG1_ALT_MASK))
+
+#define MPL_REG_CTRL_REG1_OS_SHIFT					3
+#define MPL_REG_CTRL_REG1_OS_MASK					((0b111) << (MPL_REG_CTRL_REG1_OS_SHIFT))
+#define MPL_REG_CTRL_REG1_OS(x)						(((x) << (MPL_REG_CTRL_REG1_OS_SHIFT)) & (MPL_REG_CTRL_REG1_OS_MASK))
+
+#define MPL_REG_CTRL_REG1_RST_SHIFT					2
+#define MPL_REG_CTRL_REG1_RST_MASK					((0b1) << (MPL_REG_CTRL_REG1_RST_SHIFT))
+#define MPL_REG_CTRL_REG1_RST(x)					(((x) << (MPL_REG_CTRL_REG1_RST_SHIFT)) & (MPL_REG_CTRL_REG1_RST_MASK))
+
+#define MPL_REG_CTRL_REG1_OST_SHIFT					1
+#define MPL_REG_CTRL_REG1_OST_MASK					((0b1) << (MPL_REG_CTRL_REG1_OST_SHIFT))
+#define MPL_REG_CTRL_REG1_OST(x)					(((x) << (MPL_REG_CTRL_REG1_OST_SHIFT)) & (MPL_REG_CTRL_REG1_OST_MASK))
+
+#define MPL_REG_CTRL_REG1_SBYB_SHIFT				0
+#define MPL_REG_CTRL_REG1_SBYB_MASK					((0b1) << (MPL_REG_CTRL_REG1_SBYB_SHIFT))
+#define MPL_REG_CTRL_REG1_SBYB(x)					(((x) << (MPL_REG_CTRL_REG1_SBYB_SHIFT)) & (MPL_REG_CTRL_REG1_SBYB_MASK))
+
 /*********************************************************
  * Local Variables
  ********************************************************/
@@ -230,10 +297,56 @@ void mpl_dev_id(void)
 
 void mpl_init(void)
 {
-	return;
+	// flush buffers and prep for I2C transactions
+	mpl_flush_buffers();
+	I2C_TransferReturn_TypeDef ret;
+
+	// set Altimeter mode and OS = 128
+	uint8_t initial_ctrlreg1_value = 	MPL_REG_CTRL_REG1_ALT(1) | \
+										MPL_REG_CTRL_REG1_OS(0b111) | \
+										MPL_REG_CTRL_REG1_RST(0) | \
+										MPL_REG_CTRL_REG1_OST(0) | \
+										MPL_REG_CTRL_REG1_SBYB(0);
+	mpl_write_buf[0] = MPL_REG_CTRL_REG1;
+	mpl_write_buf[1] = initial_ctrlreg1_value;
+	ret = MPL3115A2_transaction(I2C_FLAG_WRITE, mpl_write_buf, 2, mpl_read_buf, 0);
+	EFM_ASSERT(ret == i2cTransferDone);
+	printf("[%10s] CTRL_REG1 set - new value: 0x%02X\r\n", MPL_NAME, initial_ctrlreg1_value);
+
+	// enable data flags for when a new sample is ready to be transferred
+	uint8_t initial_ptdatacfg_value =	MPL_REG_PT_DATA_CFG_DREM(1) | \
+										MPL_REG_PT_DATA_CFG_PDEFE(1) | \
+										MPL_REG_PT_DATA_CFG_TDEFE(1);
+	mpl_write_buf[0] = MPL_REG_PT_DATA_CFG;
+	mpl_write_buf[1] = initial_ptdatacfg_value;
+	ret = MPL3115A2_transaction(I2C_FLAG_WRITE, mpl_write_buf, 2, mpl_read_buf, 0);
+	EFM_ASSERT(ret == i2cTransferDone);
+	printf("[%10s] PT_DATA_CFG set - new value: 0x%02X\r\n", MPL_NAME, initial_ptdatacfg_value);
+
+	// set active mode
+	initial_ctrlreg1_value |= MPL_REG_CTRL_REG1_SBYB(1);
+	mpl_write_buf[0] = MPL_REG_CTRL_REG1;
+	mpl_write_buf[1] = initial_ctrlreg1_value;
+	ret = MPL3115A2_transaction(I2C_FLAG_WRITE, mpl_write_buf, 2, mpl_read_buf, 0);
+	EFM_ASSERT(ret == i2cTransferDone);
+	printf("[%10s] CTRL_REG1 set - new value: 0x%02X\r\n", MPL_NAME, initial_ctrlreg1_value);
 }
 
 void mpl_process_action(void)
 {
-	return;
+	// flush buffers and prep for I2C transactions
+	sl_sleeptimer_delay_millisecond(50);
+	mpl_flush_buffers();
+	I2C_TransferReturn_TypeDef ret;
+
+	// read the status register until ready
+	mpl_write_buf[0] = MPL_REG_STATUS;
+	while(1) {
+			ret = MPL3115A2_transaction(I2C_FLAG_WRITE_READ, mpl_write_buf, 1, mpl_read_buf, 1);
+			EFM_ASSERT(ret == i2cTransferDone);
+			if(mpl_read_buf[0] & MPL_REG_DR_STATUS_PTDR_MASK) break;
+	}
+
+	// read the data
+	printf("[%10s] Reading data here (placeholder)\r\n", MPL_NAME);
 }
