@@ -182,7 +182,7 @@ typedef enum {
 /*********************************************************
  * Local Variables
  ********************************************************/
-// sensor variables
+// sensor variables (temperature in deg. C, pressure in kPa, altitude in meters)
 float mpl_temperature, mpl_pressure, mpl_altitude;
 
 // i2c buffer
@@ -267,6 +267,84 @@ void mpl_flush_buffers(void)
     memset(mpl_read_buf, 0, I2C_BUFFER_LENGTH);
 }
 
+/**
+ * MPL_GetPressure
+ *
+ * Retrieves the pressure of the MPL3115A2 sensor
+ */
+void MPL3115A2_GetPressure(void)
+{
+    // start I2C transfer
+    I2C_TransferReturn_TypeDef ret;
+    mpl_flush_buffers();
+
+    // read the status register until ready
+    sl_sleeptimer_delay_millisecond(512);
+    mpl_write_buf[0] = MPL_REG_DR_STATUS;
+    while(1) {
+            ret = MPL3115A2_transaction(I2C_FLAG_WRITE_READ, mpl_write_buf, 1, mpl_read_buf, 1);
+            EFM_ASSERT(ret == i2cTransferDone);
+            if(mpl_read_buf[0] & MPL_REG_DR_STATUS_PTDR_MASK) break;
+    }
+    mpl_flush_buffers();
+
+    // perform the necessary I2C transaction
+    mpl_write_buf[0] = MPL_REG_OUT_P_MSB;
+    ret = MPL3115A2_transaction(I2C_FLAG_WRITE_READ, mpl_write_buf, 1, mpl_read_buf, 3);
+    EFM_ASSERT(ret == i2cTransferDone);
+    uint8_t pressure_msb = mpl_read_buf[0];
+    uint8_t pressure_csb = mpl_read_buf[1];
+    uint8_t pressure_lsb = mpl_read_buf[2];
+
+    // calculate pressure
+    uint32_t pressure_raw = ((pressure_msb) << 16) | ((pressure_csb) << 8) | ((pressure_lsb));
+    mpl_pressure = (float)((float)(pressure_raw) / 64000.0);
+}
+
+/**
+ * MPL_GetTemperature
+ *
+ * Retrieves the temperature data of the MPL3115A2 sensor
+ */
+void MPL3115A2_GetTemperature(void)
+{
+    // start I2C transfer
+    I2C_TransferReturn_TypeDef ret;
+    mpl_flush_buffers();
+
+    // read the status register until ready
+    sl_sleeptimer_delay_millisecond(512);
+    mpl_write_buf[0] = MPL_REG_DR_STATUS;
+    while(1) {
+            ret = MPL3115A2_transaction(I2C_FLAG_WRITE_READ, mpl_write_buf, 1, mpl_read_buf, 1);
+            EFM_ASSERT(ret == i2cTransferDone);
+            if(mpl_read_buf[0] & MPL_REG_DR_STATUS_PTDR_MASK) break;
+    }
+    mpl_flush_buffers();
+
+    // read temperature data
+    mpl_write_buf[0] = MPL_REG_OUT_T_MSB;
+    ret = MPL3115A2_transaction(I2C_FLAG_WRITE_READ, mpl_write_buf, 1, mpl_read_buf, 2);
+    EFM_ASSERT(ret == i2cTransferDone);
+    uint8_t temp_msb = mpl_read_buf[0];
+    uint8_t temp_lsb = mpl_read_buf[1];
+
+    // calculate temperature
+    int16_t temp_raw = (((temp_msb) << 8) | (temp_lsb));
+    mpl_temperature = (float)((float)(temp_raw) / 256.0);
+}
+
+/**
+ * MPL_Report
+ *
+ * Reports sensor data verbatim
+ */
+void MPL3115A2_Report(void)
+{
+    printf("[%10s] %15s: %12.3f kPa\r\n", MPL_NAME, "Pressure", mpl_pressure);
+    printf("[%10s] %15s: %12.3f deg. C\r\n", MPL_NAME, "Temperature", mpl_temperature);
+}
+
 /*********************************************************
  * Global Functions
  ********************************************************/
@@ -301,8 +379,8 @@ void mpl_init(void)
 	mpl_flush_buffers();
 	I2C_TransferReturn_TypeDef ret;
 
-	// set Altimeter mode and OS = 128
-	uint8_t initial_ctrlreg1_value = 	MPL_REG_CTRL_REG1_ALT(1) | \
+	// set Barometer mode and OS = 128
+	uint8_t initial_ctrlreg1_value = 	MPL_REG_CTRL_REG1_ALT(0) | \
 										MPL_REG_CTRL_REG1_OS(0b111) | \
 										MPL_REG_CTRL_REG1_RST(0) | \
 										MPL_REG_CTRL_REG1_OST(0) | \
@@ -334,19 +412,10 @@ void mpl_init(void)
 
 void mpl_process_action(void)
 {
-	// flush buffers and prep for I2C transactions
-	sl_sleeptimer_delay_millisecond(50);
-	mpl_flush_buffers();
-	I2C_TransferReturn_TypeDef ret;
+	// pressure/temperature read
+    MPL3115A2_GetPressure();
+	MPL3115A2_GetTemperature();
 
-	// read the status register until ready
-	mpl_write_buf[0] = MPL_REG_STATUS;
-	while(1) {
-			ret = MPL3115A2_transaction(I2C_FLAG_WRITE_READ, mpl_write_buf, 1, mpl_read_buf, 1);
-			EFM_ASSERT(ret == i2cTransferDone);
-			if(mpl_read_buf[0] & MPL_REG_DR_STATUS_PTDR_MASK) break;
-	}
-
-	// read the data
-	printf("[%10s] Reading data here (placeholder)\r\n", MPL_NAME);
+	// report data
+	MPL3115A2_Report();
 }

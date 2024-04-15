@@ -219,13 +219,13 @@ typedef enum {
  * Local Variables
  ********************************************************/
 // sensor variables
-static float temperature; // degrees Celsius
-static float uva, uvb, uvc; // nW/cm^2
+float as_temperature; // degrees Celsius
+float as_uva, as_uvb, as_uvc; // nW/cm^2
 
 // i2c buffer
 #define I2C_BUFFER_LENGTH 16
-static uint8_t as_write_buf[I2C_BUFFER_LENGTH];
-static uint8_t as_read_buf[I2C_BUFFER_LENGTH];
+uint8_t as_write_buf[I2C_BUFFER_LENGTH];
+uint8_t as_read_buf[I2C_BUFFER_LENGTH];
 
 /*********************************************************
  * Local Functions
@@ -469,7 +469,7 @@ void AS7331_GetTemperature()
 
     // with the result buffer, store into local file variable
     uint16_t tmp = (((uint16_t)as_read_buf[1]) << 8) | ((uint16_t)as_read_buf[0]);
-    temperature = (((float)tmp * 0.05) - 66.9);
+    as_temperature = (((float)tmp * 0.05) - 66.9);
 }
 
 /**
@@ -545,20 +545,32 @@ void AS7331_GetUV(UV_CHANNEL_t type)
     float tmp = (float)(((float)fsr)/(time_interval * clock_frequency)) * mres * 1000;
     switch(type) {
         case UVA:
-            uva = tmp;
+            as_uva = tmp;
             break;
         case UVB:
-            uvb = tmp;
+            as_uvb = tmp;
             break;
         case UVC:
-            uvc = tmp;
+            as_uvc = tmp;
             break;
         default:
             // default to UVA channel
-            uva = tmp;
+            as_uva = tmp;
     }
 }
 
+/**
+ * AS7331_Report
+ *
+ * Report sensor data verbatim
+ */
+void AS7331_Report(void)
+{
+    printf("[%10s] %15s: %12.2f deg. C\r\n", AS_NAME, "Temperature", as_temperature);
+    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVA Irradiance", as_uva);
+    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVB Irradiance", as_uvb);
+    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVC Irradiance", as_uvc);
+}
 
 /*********************************************************
  * Global Functions
@@ -662,21 +674,12 @@ void as_init(void)
 
 void as_process_action(void)
 {
-    /*********************
-     * TEMPERATURE
-     *********************/
+    // read sensor data
     AS7331_GetTemperature();
-    printf("[%10s] Temperature: %.2f%cC\r\n", AS_NAME, temperature, 248);
-
     AS7331_GetUV(UVA);
-    printf("[%10s] UVA Irradiance: %.6f nW/cm^2\r\n", AS_NAME, uva);
-
     AS7331_GetUV(UVB);
-    printf("[%10s] UVB Irradiance: %.6f nW/cm^2\r\n", AS_NAME, uvb);
-
     AS7331_GetUV(UVC);
-    printf("[%10s] UVC Irradiance: %.6f nW/cm^2\r\n", AS_NAME, uvc);
 
-
-    return;
+    // report
+    AS7331_Report();
 }
