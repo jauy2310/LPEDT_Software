@@ -81,12 +81,18 @@ void app_init(void)
  ******************************************************************************/
 void app_process_action(void)
 {
-  /**
-   * Main application ticking functions
-   */
+    /**
+     * Ticking Functions for Main Application
+     */
 //  i2cspm_app_process_action();
     as_process_action();
 	mpl_process_action();
     sl_sleeptimer_delay_millisecond(1000);
+
+    /**
+     * Report sensor data
+     */
+    as_report();
+    mpl_report();
     printf("=============================================================\r\n");
 }

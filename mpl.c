@@ -334,17 +334,6 @@ void MPL3115A2_GetTemperature(void)
     mpl_temperature = (float)((float)(temp_raw) / 256.0);
 }
 
-/**
- * MPL_Report
- *
- * Reports sensor data verbatim
- */
-void MPL3115A2_Report(void)
-{
-    printf("[%10s] %15s: %12.3f kPa\r\n", MPL_NAME, "Pressure", mpl_pressure);
-    printf("[%10s] %15s: %12.3f deg. C\r\n", MPL_NAME, "Temperature", mpl_temperature);
-}
-
 /*********************************************************
  * Global Functions
  ********************************************************/
@@ -410,12 +399,15 @@ void mpl_init(void)
 	printf("[%10s] CTRL_REG1 set - new value: 0x%02X\r\n", MPL_NAME, initial_ctrlreg1_value);
 }
 
+void mpl_report(void)
+{
+    printf("[%10s] %15s: %12.3f kPa\r\n", MPL_NAME, "Pressure", mpl_pressure);
+    printf("[%10s] %15s: %12.3f deg. C\r\n", MPL_NAME, "Temperature", mpl_temperature);
+}
+
 void mpl_process_action(void)
 {
 	// pressure/temperature read
     MPL3115A2_GetPressure();
 	MPL3115A2_GetTemperature();
-
-	// report data
-	MPL3115A2_Report();
 }

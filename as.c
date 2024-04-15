@@ -515,10 +515,10 @@ void AS7331_GetUV(UV_CHANNEL_t type)
     as_write_buf[0] = AS_REG_MEAS_OSR_STATUS;
     while(1) {
             ret = AS7331_transaction(I2C_FLAG_WRITE_READ, as_write_buf, 1, as_read_buf, 2);
-            if(!(as_read_buf[1] & AS_REG_MEAS_STATUS_NOTREADY_MASK)) {
-                    break;
-            }
+            EFM_ASSERT(ret == i2cTransferDone);
+            if(!(as_read_buf[1] & AS_REG_MEAS_STATUS_NOTREADY_MASK)) break;
     }
+    sl_sleeptimer_delay_millisecond(time_interval);
 
     // create an I2C transaction to read UV register
     as_flush_buffers();
@@ -557,19 +557,6 @@ void AS7331_GetUV(UV_CHANNEL_t type)
             // default to UVA channel
             as_uva = tmp;
     }
-}
-
-/**
- * AS7331_Report
- *
- * Report sensor data verbatim
- */
-void AS7331_Report(void)
-{
-    printf("[%10s] %15s: %12.2f deg. C\r\n", AS_NAME, "Temperature", as_temperature);
-    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVA Irradiance", as_uva);
-    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVB Irradiance", as_uvb);
-    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVC Irradiance", as_uvc);
 }
 
 /*********************************************************
@@ -672,6 +659,14 @@ void as_init(void)
     AS7331_ChangeMode(AS_CONFIG_MODE_MEASUREMENT);
 }
 
+void as_report(void)
+{
+    printf("[%10s] %15s: %12.2f deg. C\r\n", AS_NAME, "Temperature", as_temperature);
+    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVA Irradiance", as_uva);
+    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVB Irradiance", as_uvb);
+    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVC Irradiance", as_uvc);
+}
+
 void as_process_action(void)
 {
     // read sensor data
@@ -679,7 +674,4 @@ void as_process_action(void)
     AS7331_GetUV(UVA);
     AS7331_GetUV(UVB);
     AS7331_GetUV(UVC);
-
-    // report
-    AS7331_Report();
 }
