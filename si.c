@@ -32,6 +32,7 @@
 #define TEMPERATURE_BAND_C               4
 
 // SI7021_Config_Settings Si7021 Configuration Settings
+#define SI_NAME                          ("Si7021")
 #define SI7021_I2C_DEVICE                (sl_i2cspm_sensor) /**< I2C device used to control the Si7021  */
 #define SI7021_I2C_BUS_ADDRESS           0x40               /**< I2C bus address                        */
 #define SI7021_DEVICE_ID                 0x15               /**< Si7021 device ID                       */
@@ -310,6 +311,13 @@ void si_init(void)
     initialise_timer();
 }
 
+void si_report(void)
+{
+    // Print the current humidity and temperature to vcom
+    printf("[%10s] %20s: %12ld %%\r\n", SI_NAME, "Relative Humidity", relative_humidity);
+    printf("[%10s] %20s: %12ld deg. C\r\n", SI_NAME, "Temperature", temperature);
+}
+
 /***************************************************************************//**
  * Ticking function
  ******************************************************************************/
@@ -322,14 +330,6 @@ void si_process_action(void)
     if (local_read_sensor_data) {
             // Measure the current humidity and temperature
             SI7021_measure(&relative_humidity, &temperature);
-
-            // Print the current humidity and temperature to vcom
-            printf("\r\n");
-            printf("Relative Humidity = %ld%%\r\n", relative_humidity);
-            printf("Temperature = %ld C\r\n", temperature);
-
-            // Set appropriate LEDs (led0 or 1) based on temperature
-            set_leds(temperature);
 
             // Reset the flag
             local_read_sensor_data = false;

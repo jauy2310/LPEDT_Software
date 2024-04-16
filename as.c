@@ -511,6 +511,7 @@ void AS7331_GetUV(UV_CHANNEL_t type)
     // switch back to measurement mode and wait for ready bit
     AS7331_ChangeMode(AS_CONFIG_MODE_MEASUREMENT);
     AS7331_StartCMDTransfer();
+    sl_sleeptimer_delay_millisecond(time_interval);
     as_flush_buffers();
     as_write_buf[0] = AS_REG_MEAS_OSR_STATUS;
     while(1) {
@@ -518,7 +519,6 @@ void AS7331_GetUV(UV_CHANNEL_t type)
             EFM_ASSERT(ret == i2cTransferDone);
             if(!(as_read_buf[1] & AS_REG_MEAS_STATUS_NOTREADY_MASK)) break;
     }
-    sl_sleeptimer_delay_millisecond(time_interval);
 
     // create an I2C transaction to read UV register
     as_flush_buffers();
@@ -661,10 +661,10 @@ void as_init(void)
 
 void as_report(void)
 {
-    printf("[%10s] %15s: %12.2f deg. C\r\n", AS_NAME, "Temperature", as_temperature);
-    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVA Irradiance", as_uva);
-    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVB Irradiance", as_uvb);
-    printf("[%10s] %15s: %12.6f nW/cm^2\r\n", AS_NAME, "UVC Irradiance", as_uvc);
+    printf("[%10s] %20s: %12.2f deg. C\r\n", AS_NAME, "Temperature", as_temperature);
+    printf("[%10s] %20s: %12.6f nW/cm^2\r\n", AS_NAME, "UVA Irradiance", as_uva);
+    printf("[%10s] %20s: %12.6f nW/cm^2\r\n", AS_NAME, "UVB Irradiance", as_uvb);
+    printf("[%10s] %20s: %12.6f nW/cm^2\r\n", AS_NAME, "UVC Irradiance", as_uvc);
 }
 
 void as_process_action(void)

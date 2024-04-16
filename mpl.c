@@ -401,8 +401,8 @@ void mpl_init(void)
 
 void mpl_report(void)
 {
-    printf("[%10s] %15s: %12.3f kPa\r\n", MPL_NAME, "Pressure", mpl_pressure);
-    printf("[%10s] %15s: %12.3f deg. C\r\n", MPL_NAME, "Temperature", mpl_temperature);
+    printf("[%10s] %20s: %12.3f kPa\r\n", MPL_NAME, "Pressure", mpl_pressure);
+    printf("[%10s] %20s: %12.3f deg. C\r\n", MPL_NAME, "Temperature", mpl_temperature);
 }
 
 void mpl_process_action(void)
