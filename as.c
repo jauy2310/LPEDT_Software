@@ -220,7 +220,7 @@ typedef enum {
  ********************************************************/
 // sensor variables
 float as_temperature; // degrees Celsius
-float as_uva, as_uvb, as_uvc; // nW/cm^2
+float as_uva, as_uvb, as_uvc; // uW/cm^2
 
 // i2c buffer
 #define I2C_BUFFER_LENGTH 16
@@ -359,25 +359,50 @@ void AS7331_ChangeMode(uint8_t new_mode)
  */
 void AS7331_StartCMDTransfer()
 {
-    // read the current OSR value
+    // create temporary values for I2C
     I2C_TransferReturn_TypeDef ret;
-    as_flush_buffers();
-    as_write_buf[0] = AS_REG_CONFIG_OSR;
-    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, as_write_buf, 1, as_read_buf, 1);
+    uint8_t temp_write_buf[2];
+    uint8_t temp_read_buf[1];
+
+    // read the current OSR value
+    temp_write_buf[0] = AS_REG_CONFIG_OSR;
+    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, temp_write_buf, 1, temp_read_buf, 1);
     EFM_ASSERT(ret == i2cTransferDone);
 
     // save old buffer data
-    uint8_t osr_old = as_read_buf[0];
-
-    // switch back to measurement mode
-    AS7331_ChangeMode(AS_CONFIG_MODE_MEASUREMENT);
+    uint8_t osr_old = temp_read_buf[0];
 
     // keep the OSR the same, but force the SS bit to 1 and write value back to OSR
-    as_flush_buffers();
     uint8_t osr_new = (osr_old | AS_REG_CONFIG_OSR_SS(1));
-    as_write_buf[0] = AS_REG_CONFIG_OSR;
-    as_write_buf[1] = osr_new;
-    ret = AS7331_transaction(I2C_FLAG_WRITE, as_write_buf, 2, as_read_buf, 1);
+    temp_write_buf[1] = osr_new;
+    ret = AS7331_transaction(I2C_FLAG_WRITE, temp_write_buf, 2, temp_read_buf, 0);
+    EFM_ASSERT(ret == i2cTransferDone);
+}
+
+/**
+ * AS7331_StopCMDTransfer()
+ *
+ * End a CMD data transfer by setting the OSR:SS bit to 0
+ */
+void AS7331_StopCMDTransfer()
+{
+    // create temporary values for I2C
+    I2C_TransferReturn_TypeDef ret;
+    uint8_t temp_write_buf[2];
+    uint8_t temp_read_buf[1];
+
+    // read the current OSR value
+    temp_write_buf[0] = AS_REG_CONFIG_OSR;
+    ret = AS7331_transaction(I2C_FLAG_WRITE_READ, temp_write_buf, 1, temp_read_buf, 1);
+    EFM_ASSERT(ret == i2cTransferDone);
+
+    // save old buffer data
+    uint8_t osr_old = temp_read_buf[0];
+
+    // keep the OSR the same, but force the SS bit to 1 and write value back to OSR
+    uint8_t osr_new = (osr_old & ~AS_REG_CONFIG_OSR_SS(1));
+    temp_write_buf[1] = osr_new;
+    ret = AS7331_transaction(I2C_FLAG_WRITE, temp_write_buf, 2, temp_read_buf, 0);
     EFM_ASSERT(ret == i2cTransferDone);
 }
 
@@ -467,6 +492,9 @@ void AS7331_GetTemperature()
     ret = AS7331_transaction(I2C_FLAG_WRITE_READ, as_write_buf, 1, as_read_buf, 2);
     EFM_ASSERT(ret == i2cTransferDone);
 
+    // stop CMD measurement
+    AS7331_StopCMDTransfer();
+
     // with the result buffer, store into local file variable
     uint16_t tmp = (((uint16_t)as_read_buf[1]) << 8) | ((uint16_t)as_read_buf[0]);
     as_temperature = (((float)tmp * 0.05) - 66.9);
@@ -510,18 +538,17 @@ void AS7331_GetUV(UV_CHANNEL_t type)
 
     // switch back to measurement mode and wait for ready bit
     AS7331_ChangeMode(AS_CONFIG_MODE_MEASUREMENT);
-    AS7331_StartCMDTransfer();
-    sl_sleeptimer_delay_millisecond(time_interval);
-    as_flush_buffers();
-    as_write_buf[0] = AS_REG_MEAS_OSR_STATUS;
-    while(1) {
-            ret = AS7331_transaction(I2C_FLAG_WRITE_READ, as_write_buf, 1, as_read_buf, 2);
-            EFM_ASSERT(ret == i2cTransferDone);
-            if(!(as_read_buf[1] & AS_REG_MEAS_STATUS_NOTREADY_MASK)) break;
-    }
+//    as_write_buf[0] = AS_REG_MEAS_OSR_STATUS;
+//    while(1) {
+//            ret = AS7331_transaction(I2C_FLAG_WRITE_READ, as_write_buf, 1, as_read_buf, 2);
+//            EFM_ASSERT(ret == i2cTransferDone);
+//            if(!(as_read_buf[1] & AS_REG_MEAS_STATUS_NOTREADY_MASK)) break;
+//    }
 
     // create an I2C transaction to read UV register
+    AS7331_StartCMDTransfer();
     as_flush_buffers();
+    sl_sleeptimer_delay_millisecond(time_interval);
     switch(type) {
         case UVA:
             as_write_buf[0] = AS_REG_MEAS_MRES1_A;
@@ -539,10 +566,11 @@ void AS7331_GetUV(UV_CHANNEL_t type)
     }
     ret = AS7331_transaction(I2C_FLAG_WRITE_READ, as_write_buf, 1, as_read_buf, 2);
     EFM_ASSERT(ret == i2cTransferDone);
+    AS7331_StopCMDTransfer();
 
     // with the resulting buffer, calculate irradiance
     uint16_t mres = (((uint16_t)as_read_buf[1]) << 8) | ((uint16_t)as_read_buf[0]);
-    float tmp = (float)(((float)fsr)/(time_interval * clock_frequency)) * mres * 1000;
+    float tmp = (float)(((float)fsr)/(time_interval * clock_frequency)) * mres;
     switch(type) {
         case UVA:
             as_uva = tmp;
@@ -662,9 +690,9 @@ void as_init(void)
 void as_report(void)
 {
     printf("[%10s] %20s: %12.2f deg. C\r\n", AS_NAME, "Temperature", as_temperature);
-    printf("[%10s] %20s: %12.6f nW/cm^2\r\n", AS_NAME, "UVA Irradiance", as_uva);
-    printf("[%10s] %20s: %12.6f nW/cm^2\r\n", AS_NAME, "UVB Irradiance", as_uvb);
-    printf("[%10s] %20s: %12.6f nW/cm^2\r\n", AS_NAME, "UVC Irradiance", as_uvc);
+    printf("[%10s] %20s: %12.6f uW/cm^2\r\n", AS_NAME, "UVA Irradiance", as_uva);
+    printf("[%10s] %20s: %12.6f uW/cm^2\r\n", AS_NAME, "UVB Irradiance", as_uvb);
+    printf("[%10s] %20s: %12.6f uW/cm^2\r\n", AS_NAME, "UVC Irradiance", as_uvc);
 }
 
 void as_process_action(void)
